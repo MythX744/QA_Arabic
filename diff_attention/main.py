@@ -102,16 +102,22 @@ def train_differential_model(ratio=0.3):
         # Setup dataloaders
         train_loader, val_loader = setup_dataloaders(tokenizer, config['batch_size'])
 
+        # Move model to GPU if available
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+        
+        model_name = f"diff_attn_{int(ratio * 100)}"
+
         # Initialize trainer
         trainer = Trainer(
-            model=model,
-            train_loader=train_loader,
-            val_loader=val_loader,
-            tokenizer=tokenizer,
-            save_path=config['save_path'],
-            num_epochs=config['num_epochs'],
-            learning_rate=config['learning_rate'],
-            device=config['device']
+                model_name=model_name,
+                train_loader=train_loader,
+                val_loader=val_loader,
+                tokenizer=tokenizer,
+                save_path=f"./models/{model_name}",
+                num_epochs=3,
+                learning_rate=5e-5,
+                device=device
         )
 
         # Train model

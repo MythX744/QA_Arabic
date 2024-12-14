@@ -73,7 +73,7 @@ def train_and_evaluate_models():
 
             # Initialize trainer
             trainer = Trainer(
-                model=model,
+                model_name=model_name,
                 train_loader=train_loader,
                 val_loader=val_loader,
                 tokenizer=tokenizer,
