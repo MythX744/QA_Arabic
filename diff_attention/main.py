@@ -2,11 +2,11 @@ import torch
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
 from dataset import ArabicQADataset
-from .models import create_qa_model
+from models import create_qa_model
+from diff_train import TrainerDiff
 import logging
 from pathlib import Path
 import json
-from train import Trainer
 
 # Set up logging
 logging.basicConfig(
@@ -40,9 +40,6 @@ def setup_dataloaders(tokenizer, batch_size=8):
             is_training=True
         )
 
-        logger.info(f"Train dataset size: {len(train_dataset)}")
-        logger.info(f"Validation dataset size: {len(val_dataset)}")
-
         # Create dataloaders
         train_loader = DataLoader(
             train_dataset,
@@ -65,93 +62,77 @@ def setup_dataloaders(tokenizer, batch_size=8):
         raise
 
 
-def train_differential_model(ratio=0.3):
-    """Train model with differential attention at specified ratio."""
-    # Create directories if they don't exist
-    Path("./models").mkdir(parents=True, exist_ok=True)
-
+def train_model(differential_ratio=0.3):
+    """Train model with differential attention."""
     config = {
         'model_name': "aubmindlab/aragpt2-base",
         'batch_size': 8,
         'num_epochs': 3,
         'learning_rate': 5e-5,
-        'save_path': f"./models/differential_gpt2_{int(ratio * 100)}",
+        'save_path': f"./models/diff_attn_{int(differential_ratio * 100)}",
         'device': "cuda" if torch.cuda.is_available() else "cpu"
     }
 
     try:
+        # Create directories
+        Path("./models").mkdir(parents=True, exist_ok=True)
+
         # Initialize tokenizer
         logger.info("Loading tokenizer...")
         tokenizer = AutoTokenizer.from_pretrained(config['model_name'])
 
-        # Create QA model with differential attention
-        logger.info(f"Creating model with {ratio * 100}% differential attention...")
+        # Create model with differential attention
+        logger.info(f"Creating model with {differential_ratio * 100}% differential attention...")
         model = create_qa_model(
             pretrained_model_name=config['model_name'],
-            differential_ratio=ratio
+            differential_ratio=differential_ratio
         )
-
-        # Log device information
-        logger.info(f"Using device: {config['device']}")
-        if config['device'] == 'cuda':
-            logger.info(f"GPU Memory Available: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
-
-        # Move model to device
-        model = model.to(config['device'])
 
         # Setup dataloaders
         train_loader, val_loader = setup_dataloaders(tokenizer, config['batch_size'])
 
-        # Move model to GPU if available
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = model.to(device)
-        
-        model_name = f"diff_attn_{int(ratio * 100)}"
-
         # Initialize trainer
-        trainer = Trainer(
-                model_name=model_name,
-                train_loader=train_loader,
-                val_loader=val_loader,
-                tokenizer=tokenizer,
-                save_path=f"./models/{model_name}",
-                num_epochs=3,
-                learning_rate=5e-5,
-                device=device
+        trainer = TrainerDiff(
+            model=model,  # Add model here
+            model_name=f"diff_attn_{int(differential_ratio * 100)}",
+            train_loader=train_loader,
+            val_loader=val_loader,
+            tokenizer=tokenizer,
+            save_path=config['save_path'],
+            num_epochs=config['num_epochs'],
+            learning_rate=config['learning_rate'],
+            device=config['device']
         )
 
         # Train model
-        logger.info("Starting training...")
         trainer.train()
 
-        # Validate final model
+        # Get final validation loss
         val_loss = trainer.validate()
-        logger.info(f"Final validation loss: {val_loss:.4f}")
 
         return val_loss
 
     except Exception as e:
-        logger.error(f"An error occurred during training: {str(e)}")
+        logger.error(f"Error in train_model: {str(e)}")
         raise
 
 
 def main():
     # Try different ratios of differential attention
-    ratios = [0.25, 0.35, 0.5]  # 25%, 35%, and 50%
+    ratios = [0.3, 0.5, 0.7]  # 30%, 50%, and 70%
     results = {}
 
     try:
         for ratio in ratios:
             logger.info(f"\nTraining model with {ratio * 100}% differential attention...")
-            val_loss = train_differential_model(ratio)
+            val_loss = train_model(ratio)
             results[f"differential_{int(ratio * 100)}"] = val_loss
 
-        # Save results to file
-        results_file = Path("./models/training_results.json")
-        with open(results_file, 'w') as f:
+        # Save results
+        with open("./models/training_results.json", 'w') as f:
             json.dump(results, f, indent=4)
 
-        # Print final results
+        # Print results
         logger.info("\nTraining completed! Final results:")
         for model_name, loss in results.items():
             logger.info(f"{model_name}: Validation Loss = {loss:.4f}")

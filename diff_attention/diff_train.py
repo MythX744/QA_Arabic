@@ -1,122 +1,168 @@
 import torch
-from train import Trainer
-from models import create_qa_model
-from dataset import ArabicQADataset
 from torch.utils.data import DataLoader
-from transformers import AutoTokenizer
-import json
-from pathlib import Path
+from transformers import AdamW, get_scheduler
+from torch.utils.tensorboard import SummaryWriter
 import logging
+from tqdm import tqdm
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def train_and_evaluate_models():
-    # Initialize tokenizer
-    logger.info("Initializing tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained("aubmindlab/aragpt2-base")
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+class TrainerDiff:
+    def __init__(
+            self,
+            model,  # Add model parameter
+            model_name: str,
+            train_loader: DataLoader,
+            val_loader: DataLoader,
+            tokenizer,
+            save_path: str = "./models/qa_model",
+            num_epochs: int = 3,
+            learning_rate: float = 5e-5,
+            device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    ):
+        self.model = model  # Store the model
+        self.model_name = model_name
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.tokenizer = tokenizer
+        self.save_path = save_path
+        self.num_epochs = num_epochs
+        self.learning_rate = learning_rate
+        self.device = device
 
-    # Prepare datasets
-    logger.info("Preparing datasets...")
-    train_dataset = ArabicQADataset(
-        data_path='data/train-open.json',
-        tokenizer=tokenizer,
-        max_length=512,
-        is_training=True
-    )
+        # Move model to device
+        self.model = self.model.to(self.device)
 
-    val_dataset = ArabicQADataset(
-        data_path='data/test-open.json',
-        tokenizer=tokenizer,
-        max_length=512,
-        is_training=True
-    )
+        # Initialize optimizer with weight decay
+        self.optimizer = AdamW(
+            self.model.parameters(),
+            lr=self.learning_rate,
+            betas=(0.9, 0.999),
+            eps=1e-8,
+            weight_decay=0.01
+        )
 
-    # Create dataloaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=8,
-        shuffle=True,
-        collate_fn=train_dataset.collate_fn
-    )
+        # Add warmup steps
+        num_training_steps = num_epochs * len(train_loader)
+        num_warmup_steps = num_training_steps // 10
 
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=8,
-        shuffle=False,
-        collate_fn=val_dataset.collate_fn
-    )
+        self.lr_scheduler = get_scheduler(
+            "linear",
+            optimizer=self.optimizer,
+            num_warmup_steps=num_warmup_steps,
+            num_training_steps=num_training_steps
+        )
 
-    # Define different ratios for differential attention
-    ratios = [0.25, 0.35, 0.5]  # 25%, 35%, and 50%
-    results = {}
+        self.writer = SummaryWriter(log_dir=f"runs/{model_name}")
 
-    # Train models with different ratios
-    for ratio in ratios:
-        model_name = f"diff_attn_{int(ratio * 100)}"
-        logger.info(f"\nTraining model with {ratio * 100}% differential attention")
+    def train(self):
+        """Train the model."""
+        logger.info("Starting training...")
+        best_val_loss = float('inf')
 
-        try:
-            # Create model with differential attention
-            model = create_qa_model(
-                pretrained_model_name="aubmindlab/aragpt2-base",
-                differential_ratio=ratio
-            )
+        for epoch in range(self.num_epochs):
+            self.model.train()
+            total_loss = 0
+            train_steps = 0
 
-            # Move model to GPU if available
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            model = model.to(device)
+            # Training loop
+            train_iterator = tqdm(self.train_loader, desc=f"Epoch {epoch + 1}")
+            for batch_idx, batch in enumerate(train_iterator):
+                try:
+                    # Move batch to device
+                    input_ids = batch["input_ids"].to(self.device)
+                    attention_mask = batch["attention_mask"].to(self.device)
+                    labels = batch["labels"].to(self.device)
 
-            # Initialize trainer
-            trainer = Trainer(
-                model_name=model_name,
-                train_loader=train_loader,
-                val_loader=val_loader,
-                tokenizer=tokenizer,
-                save_path=f"./models/{model_name}",
-                num_epochs=3,
-                learning_rate=5e-5,
-                device=device
-            )
+                    # Forward pass
+                    outputs = self.model(
+                        input_ids=input_ids,
+                        attention_mask=attention_mask,
+                        labels=labels
+                    )
+                    loss = outputs[0]  # Get loss from model outputs
 
-            # Train the model
-            logger.info(f"Starting training for {model_name}")
-            trainer.train()
+                    # Backward pass
+                    self.optimizer.zero_grad()
+                    loss.backward()
 
-            # Evaluate the model
-            logger.info(f"Evaluating {model_name}")
-            val_loss = trainer.validate()
+                    # Clip gradients
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
-            # Store results
-            results[model_name] = {
-                "ratio": ratio,
-                "validation_loss": val_loss,
-                "model_path": f"./models/{model_name}"
-            }
+                    self.optimizer.step()
+                    self.lr_scheduler.step()
 
-            logger.info(f"Completed training for {model_name}")
-            logger.info(f"Validation Loss: {val_loss:.4f}")
+                    total_loss += loss.item()
+                    train_steps += 1
 
-        except Exception as e:
-            logger.error(f"Error training model {model_name}: {str(e)}")
-            continue
+                    # Update progress bar
+                    train_iterator.set_postfix({
+                        'loss': f'{loss.item():.4f}',
+                        'avg_loss': f'{(total_loss / train_steps):.4f}'
+                    })
 
-    # Save results
-    results_path = Path("results/differential_attention_results.json")
-    results_path.parent.mkdir(parents=True, exist_ok=True)
+                except Exception as e:
+                    logger.error(f"Error in training batch {batch_idx}: {str(e)}")
+                    continue
 
-    with open(results_path, 'w', encoding='utf-8') as f:
-        json.dump(results, f, indent=4, ensure_ascii=False)
+            # Calculate average training loss
+            avg_train_loss = total_loss / train_steps
+            self.writer.add_scalar("Loss/train", avg_train_loss, epoch)
 
-    logger.info("\nFinal Results:")
-    for model_name, result in results.items():
-        logger.info(f"{model_name}:")
-        logger.info(f"  Ratio: {result['ratio'] * 100}%")
-        logger.info(f"  Validation Loss: {result['validation_loss']:.4f}")
-        logger.info(f"  Model saved at: {result['model_path']}")
+            # Validation
+            val_loss = self.validate()
+            self.writer.add_scalar("Loss/val", val_loss, epoch)
 
-    return results
+            logger.info(f"Epoch {epoch + 1}/{self.num_epochs}")
+            logger.info(f"Average training loss: {avg_train_loss:.4f}")
+            logger.info(f"Validation loss: {val_loss:.4f}")
+
+            # Save best model
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                self.save_model(epoch, is_best=True)
+            else:
+                self.save_model(epoch)
+
+        self.writer.close()
+        logger.info("Training completed!")
+
+    def validate(self):
+        """Validate the model."""
+        self.model.eval()
+        total_loss = 0
+        val_steps = 0
+
+        with torch.no_grad():
+            for batch in self.val_loader:
+                try:
+                    input_ids = batch["input_ids"].to(self.device)
+                    attention_mask = batch["attention_mask"].to(self.device)
+                    labels = batch["labels"].to(self.device)
+
+                    outputs = self.model(
+                        input_ids=input_ids,
+                        attention_mask=attention_mask,
+                        labels=labels
+                    )
+                    loss = outputs[0]
+
+                    total_loss += loss.item()
+                    val_steps += 1
+
+                except Exception as e:
+                    logger.error(f"Error in validation batch: {str(e)}")
+                    continue
+
+        return total_loss / val_steps if val_steps > 0 else float('inf')
+
+    def save_model(self, epoch, is_best=False):
+        """Save the model checkpoint."""
+        save_dir = f"{self.save_path}_epoch_{epoch + 1}"
+        if is_best:
+            save_dir += "_best"
+
+        self.model.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
+        logger.info(f"Model saved to {save_dir}")

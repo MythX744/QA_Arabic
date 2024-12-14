@@ -1,10 +1,8 @@
 import logging
-
 import torch
 from torch.utils.data import DataLoader
 from torchmetrics.text import BLEUScore
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
-
 from dataset import ArabicQADataset
 
 # Set up logging
@@ -16,16 +14,12 @@ def setup_dataloader(tokenizer, batch_size=8):
     """
     Set up validation dataloader.
     """
-    # Make sure tokenizer has padding token
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
     # Create dataset for validation
     val_dataset = ArabicQADataset(
         data_path='data/test-open.json',
         tokenizer=tokenizer,
         max_length=32,
-        is_training=False  # No labels for evaluation
+        is_training=False  # Set to False for evaluation
     )
 
     # Create dataloader for validation
@@ -41,55 +35,67 @@ def setup_dataloader(tokenizer, batch_size=8):
 
 def evaluate_model(model, val_loader, tokenizer, device):
     """
-    Evaluate the model on the validation set using BLEU score from torchmetrics.
+    Evaluate the model on the validation set using BLEU score.
     """
     model.eval()
-    references = []
     predictions = []
-
+    references = []
     bleu_metric = BLEUScore()
+
+    # Set up generation parameters
+    gen_kwargs = {
+        'max_length': 64,
+        'min_length': 5,
+        'num_beams': 4,
+        'no_repeat_ngram_size': 3,
+        'early_stopping': True,
+        'pad_token_id': tokenizer.pad_token_id,
+        'eos_token_id': tokenizer.eos_token_id,
+    }
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
-            labels = batch["labels"].to(device)
 
-            # Generate answers using beam search instead of argmax
-            generated_ids = model.generate(
+            # Generate answers
+            outputs = model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_length=100,  # Adjust based on your needs
-                num_beams=4,  # Beam search for better generation
-                no_repeat_ngram_size=3,  # Prevent repetition
-                pad_token_id=tokenizer.pad_token_id,
-                eos_token_id=tokenizer.eos_token_id,
-                early_stopping=True
+                **gen_kwargs
             )
 
-            # Decode the generated and true texts
-            predicted_text = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
-            true_text = tokenizer.batch_decode(labels, skip_special_tokens=True)
+            # Decode generated answers and get reference answers
+            for i, output in enumerate(outputs):
+                # Get the original example
+                example = val_loader.dataset.get_example_text(batch_idx * val_loader.batch_size + i)
 
-            # Clean up the predictions (remove the question part)
-            cleaned_predictions = [text.split("الجواب:")[-1].strip() for text in predicted_text]
+                # Decode the generated answer
+                pred_text = tokenizer.decode(output, skip_special_tokens=True)
 
-            # Flatten the predictions and references
-            predictions.extend(cleaned_predictions)
-            references.extend([t.split() for t in true_text])  # Split text into words for BLEU calculation
+                # Add to predictions and references
+                predictions.append(pred_text)
+                references.append(example['answer'].split())  # Split into words for BLEU
+
+                # Print some examples
+                if batch_idx == 0 and i < 3:
+                    logger.info(f"\nExample {i + 1}:")
+                    logger.info(f"Question: {example['question']}")
+                    logger.info(f"Generated: {pred_text}")
+                    logger.info(f"Reference: {example['answer']}")
 
     # Calculate BLEU score
     bleu_score = bleu_metric(predictions, references)
-    print(f"Validation BLEU Score: {bleu_score.item()}")
 
-    # Print some examples
-    print("\nSample Predictions:")
-    for i in range(min(3, len(predictions))):
-        print(f"\nPrediction {i + 1}:")
-        print(f"Predicted: {predictions[i]}")
-        print(f"Reference: {' '.join(references[i])}")
+    # Save some examples to file
+    with open('evaluation_examples.txt', 'w', encoding='utf-8') as f:
+        for i in range(min(10, len(predictions))):
+            f.write(f"\nExample {i + 1}:\n")
+            f.write(f"Generated: {predictions[i]}\n")
+            f.write(f"Reference: {' '.join(references[i])}\n")
+            f.write("-" * 50 + "\n")
 
-    return bleu_score
+    return bleu_score.item()
 
 
 def main():
@@ -98,8 +104,7 @@ def main():
         'model_name': "aubmindlab/aragpt2-base",
         'model_path': "models/gpt2_qa_model_epoch_3",  # Path to your trained model
         'batch_size': 8,
-        'device': "cuda" if torch.cuda.is_available() else "cpu",
-        'max_length': 512  # Increased max length for Arabic text
+        'device': "cuda" if torch.cuda.is_available() else "cpu"
     }
 
     logger.info(f"Using device: {config['device']}")
@@ -108,8 +113,6 @@ def main():
         # Initialize tokenizer
         logger.info("Initializing tokenizer...")
         tokenizer = GPT2Tokenizer.from_pretrained(config['model_name'])
-
-        # Ensure tokenizer has padding token
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
@@ -119,60 +122,13 @@ def main():
         model.eval()
 
         # Setup validation dataloader
-        logger.info("Setting up dataloader for validation...")
-        val_dataset = ArabicQADataset(
-            data_path='data/test-open.json',
-            tokenizer=tokenizer,
-            max_length=config['max_length'],
-            is_training=True  # Set to True to get labels for BLEU score calculation
-        )
-
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=config['batch_size'],
-            shuffle=False,
-            collate_fn=val_dataset.collate_fn
-        )
+        logger.info("Setting up validation dataloader...")
+        val_loader = setup_dataloader(tokenizer, config['batch_size'])
 
         # Evaluate the model
         logger.info("Starting evaluation...")
         bleu_score = evaluate_model(model, val_loader, tokenizer, config['device'])
-
-        # Log evaluation results
-        logger.info(f"Final BLEU Score: {bleu_score:.4f}")
-
-        # Optional: Generate some example predictions
-        logger.info("\nGenerating example predictions...")
-        num_examples = 3
-        for i in range(min(num_examples, len(val_dataset))):
-            example = val_dataset.get_example_text(i)
-            input_text = f"السؤال: {example['question']}\nالجواب:"
-
-            # Encode input
-            inputs = tokenizer(input_text, return_tensors="pt").to(config['device'])
-
-            # Generate answer
-            with torch.no_grad():
-                outputs = model.generate(
-                    input_ids=inputs['input_ids'],
-                    attention_mask=inputs['attention_mask'],
-                    max_length=config['max_length'],
-                    num_beams=4,
-                    no_repeat_ngram_size=3,
-                    pad_token_id=tokenizer.pad_token_id,
-                    eos_token_id=tokenizer.eos_token_id,
-                    early_stopping=True
-                )
-
-            # Decode generated answer
-            generated_answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-            generated_answer = generated_answer.split("الجواب:")[-1].strip()
-
-            # Print results
-            logger.info(f"\nExample {i + 1}:")
-            logger.info(f"Question: {example['question']}")
-            logger.info(f"Generated Answer: {generated_answer}")
-            logger.info(f"True Answer: {example['answer']}")
+        logger.info(f"BLEU Score: {bleu_score:.4f}")
 
     except Exception as e:
         logger.error(f"An error occurred during evaluation: {str(e)}")
