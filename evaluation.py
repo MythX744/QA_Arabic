@@ -40,22 +40,39 @@ def evaluate_model(model, val_loader, tokenizer, device):
     """
     model.eval()
     all_results = []
+    predictions = []  # Store raw text predictions
+    references = []  # Store raw text references
     bleu_metric = BLEUScore()
-
-    # For BLEU score calculation
-    predictions_for_bleu = []
-    references_for_bleu = []
 
     # Set up generation parameters
     gen_kwargs = {
-        'max_length': 512,
+        'max_length': 129,
         'min_length': 5,
-        'num_beams': 4,
-        'no_repeat_ngram_size': 3,
+        'num_beams': 5,
+        'no_repeat_ngram_size': 2,
+        'repetition_penalty': 1.2,
+        'length_penalty': 1.0,
         'early_stopping': True,
         'pad_token_id': tokenizer.pad_token_id,
         'eos_token_id': tokenizer.eos_token_id,
+        'temperature': 0.7,
+        'top_k': 50,
+        'top_p': 0.9,
     }
+
+    def clean_generated_text(text, question):
+        """Clean up the generated text."""
+        if text.startswith(question):
+            text = text[len(question):]
+
+        clean_text = ''
+        for char in text:
+            if ord(char) > 1000000:  # Corrupted character detection
+                break
+            clean_text += char
+
+        clean_text = ' '.join(clean_text.split())
+        return clean_text
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
@@ -74,55 +91,63 @@ def evaluate_model(model, val_loader, tokenizer, device):
                 # Get the original example
                 example = val_loader.dataset.get_example_text(batch_idx * val_loader.batch_size + i)
 
-                # Decode the generated answer
-                generated_answer = tokenizer.decode(output, skip_special_tokens=True)
+                # Decode and clean the generated answer
+                generated_text = tokenizer.decode(output, skip_special_tokens=True)
+                cleaned_text = clean_generated_text(generated_text, example['question'])
 
                 # Store results for this example
                 result = {
                     "id": batch_idx * val_loader.batch_size + i,
                     "question": example['question'],
-                    "context": example.get('context', ''),  # Include context if available
+                    "context": example.get('context', ''),
                     "reference_answer": example['answer'],
-                    "generated_answer": generated_answer
+                    "generated_answer": cleaned_text
                 }
                 all_results.append(result)
 
-                # Add to BLEU calculation lists
-                predictions_for_bleu.append(generated_answer)
-                references_for_bleu.append(example['answer'].split())
+                # Store raw predictions and references for BLEU
+                predictions.append(cleaned_text)
+                references.append([example['answer']])  # References must be a list of possible references
 
                 # Log some examples
                 if batch_idx == 0 and i < 3:
                     logger.info(f"\nExample {i + 1}:")
                     logger.info(f"Question: {example['question']}")
-                    logger.info(f"Generated: {generated_answer}")
+                    logger.info(f"Generated: {cleaned_text}")
                     logger.info(f"Reference: {example['answer']}")
 
     # Calculate BLEU score
-    bleu_score = bleu_metric(predictions_for_bleu, references_for_bleu)
+    try:
+        bleu_score = bleu_metric(predictions, references)
+        logger.info(f"Successfully calculated BLEU score")
+    except Exception as e:
+        logger.error(f"Error calculating BLEU score: {e}")
+        logger.error(f"Sample prediction: {predictions[0] if predictions else 'No predictions'}")
+        logger.error(f"Sample reference: {references[0] if references else 'No references'}")
+        bleu_score = torch.tensor(0.0)
 
     # Create results dictionary with metadata
     final_results = {
         "metadata": {
             "evaluation_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "total_examples": len(all_results),
-            "bleu_score": bleu_score.item()
+            "bleu_score": bleu_score.item() if hasattr(bleu_score, 'item') else float(bleu_score)
         },
         "results": all_results
     }
-
-    # Create results directory if it doesn't exist
-    Path("evaluation_results").mkdir(exist_ok=True)
 
     # Save results to JSON file
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     json_path = f"evaluation_results/evaluation_{timestamp}.json"
 
+    # Create directory if it doesn't exist
+    Path("evaluation_results").mkdir(exist_ok=True)
+
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(final_results, f, ensure_ascii=False, indent=2)
 
     logger.info(f"Evaluation results saved to {json_path}")
-    return bleu_score.item()
+    return bleu_score.item() if hasattr(bleu_score, 'item') else float(bleu_score)
 
 
 def main():
@@ -148,12 +173,9 @@ def main():
         model = GPT2LMHeadModel.from_pretrained(config['model_path']).to(config['device'])
         model.eval()
 
-        # Setup validation dataloader
-        logger.info("Setting up validation dataloader...")
+        # First: Run the full evaluation on test-open.json
+        logger.info("Running full evaluation on test set...")
         val_loader = setup_dataloader(tokenizer, config['batch_size'])
-
-        # Evaluate the model
-        logger.info("Starting evaluation...")
         bleu_score = evaluate_model(model, val_loader, tokenizer, config['device'])
         logger.info(f"BLEU Score: {bleu_score:.4f}")
 
