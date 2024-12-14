@@ -8,7 +8,7 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-class Trainer:
+class TrainerDiff:
     def __init__(
             self,
             model,

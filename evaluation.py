@@ -18,7 +18,7 @@ def setup_dataloader(tokenizer, batch_size=8):
     val_dataset = ArabicQADataset(
         data_path='data/test-open.json',
         tokenizer=tokenizer,
-        max_length=32,
+        max_length=128,
         is_training=False  # Set to False for evaluation
     )
 

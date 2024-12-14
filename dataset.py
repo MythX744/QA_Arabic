@@ -18,7 +18,7 @@ class ArabicQADataset(Dataset):
             self,
             data_path: str,
             tokenizer,
-            max_length: int = 32,
+            max_length: int = 128,
             is_training: bool = True,
             cache_dir: Optional[str] = None
     ):
@@ -35,9 +35,10 @@ class ArabicQADataset(Dataset):
         self.data_path = Path(data_path)
         self.tokenizer = tokenizer
 
-        # Ensure tokenizer has padding token
+        # Ensure tokenizer has padding token and proper settings
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.padding_side = 'left'  # Set padding to left side
 
         self.max_length = max_length
         self.is_training = is_training
