@@ -4,6 +4,9 @@ from torch.utils.data import DataLoader
 from torchmetrics.text import BLEUScore
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 from dataset import ArabicQADataset
+import json
+from pathlib import Path
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -14,15 +17,13 @@ def setup_dataloader(tokenizer, batch_size=8):
     """
     Set up validation dataloader.
     """
-    # Create dataset for validation
     val_dataset = ArabicQADataset(
         data_path='data/test-open.json',
         tokenizer=tokenizer,
         max_length=128,
-        is_training=False  # Set to False for evaluation
+        is_training=False
     )
 
-    # Create dataloader for validation
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
@@ -35,16 +36,19 @@ def setup_dataloader(tokenizer, batch_size=8):
 
 def evaluate_model(model, val_loader, tokenizer, device):
     """
-    Evaluate the model on the validation set using BLEU score.
+    Evaluate the model and save results to JSON.
     """
     model.eval()
-    predictions = []
-    references = []
+    all_results = []
     bleu_metric = BLEUScore()
+
+    # For BLEU score calculation
+    predictions_for_bleu = []
+    references_for_bleu = []
 
     # Set up generation parameters
     gen_kwargs = {
-        'max_length': 64,
+        'max_length': 512,
         'min_length': 5,
         'num_beams': 4,
         'no_repeat_ngram_size': 3,
@@ -65,36 +69,59 @@ def evaluate_model(model, val_loader, tokenizer, device):
                 **gen_kwargs
             )
 
-            # Decode generated answers and get reference answers
+            # Process each example in the batch
             for i, output in enumerate(outputs):
                 # Get the original example
                 example = val_loader.dataset.get_example_text(batch_idx * val_loader.batch_size + i)
 
                 # Decode the generated answer
-                pred_text = tokenizer.decode(output, skip_special_tokens=True)
+                generated_answer = tokenizer.decode(output, skip_special_tokens=True)
 
-                # Add to predictions and references
-                predictions.append(pred_text)
-                references.append(example['answer'].split())  # Split into words for BLEU
+                # Store results for this example
+                result = {
+                    "id": batch_idx * val_loader.batch_size + i,
+                    "question": example['question'],
+                    "context": example.get('context', ''),  # Include context if available
+                    "reference_answer": example['answer'],
+                    "generated_answer": generated_answer
+                }
+                all_results.append(result)
 
-                # Print some examples
+                # Add to BLEU calculation lists
+                predictions_for_bleu.append(generated_answer)
+                references_for_bleu.append(example['answer'].split())
+
+                # Log some examples
                 if batch_idx == 0 and i < 3:
                     logger.info(f"\nExample {i + 1}:")
                     logger.info(f"Question: {example['question']}")
-                    logger.info(f"Generated: {pred_text}")
+                    logger.info(f"Generated: {generated_answer}")
                     logger.info(f"Reference: {example['answer']}")
 
     # Calculate BLEU score
-    bleu_score = bleu_metric(predictions, references)
+    bleu_score = bleu_metric(predictions_for_bleu, references_for_bleu)
 
-    # Save some examples to file
-    with open('evaluation_examples.txt', 'w', encoding='utf-8') as f:
-        for i in range(min(10, len(predictions))):
-            f.write(f"\nExample {i + 1}:\n")
-            f.write(f"Generated: {predictions[i]}\n")
-            f.write(f"Reference: {' '.join(references[i])}\n")
-            f.write("-" * 50 + "\n")
+    # Create results dictionary with metadata
+    final_results = {
+        "metadata": {
+            "evaluation_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total_examples": len(all_results),
+            "bleu_score": bleu_score.item()
+        },
+        "results": all_results
+    }
 
+    # Create results directory if it doesn't exist
+    Path("evaluation_results").mkdir(exist_ok=True)
+
+    # Save results to JSON file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    json_path = f"evaluation_results/evaluation_{timestamp}.json"
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(final_results, f, ensure_ascii=False, indent=2)
+
+    logger.info(f"Evaluation results saved to {json_path}")
     return bleu_score.item()
 
 
@@ -102,7 +129,7 @@ def main():
     # Configuration
     config = {
         'model_name': "aubmindlab/aragpt2-base",
-        'model_path': "models/gpt2_qa_model_epoch_3",  # Path to your trained model
+        'model_path': "models/gpt2_qa_model_epoch_3",
         'batch_size': 8,
         'device': "cuda" if torch.cuda.is_available() else "cpu"
     }

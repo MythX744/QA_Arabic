@@ -6,12 +6,6 @@ from typing import Optional, Tuple
 
 class DifferentialAttention(nn.Module):
     def __init__(self, config):
-        """
-        Initialize Differential Attention module.
-
-        Args:
-            config: Model configuration containing attention parameters
-        """
         super().__init__()
         self.num_attention_heads = config.n_head
         self.hidden_size = config.n_embd
@@ -19,29 +13,13 @@ class DifferentialAttention(nn.Module):
         self.scale = self.head_dim ** -0.5
 
         # Linear projections for Q1, Q2, K1, K2, V
-        self.q_proj = nn.Linear(self.hidden_size, 2 * self.hidden_size)
-        self.k_proj = nn.Linear(self.hidden_size, 2 * self.hidden_size)
+        self.q_proj = nn.Linear(self.hidden_size, 2 * self.hidden_size)  # Doubled for Q1 and Q2
+        self.k_proj = nn.Linear(self.hidden_size, 2 * self.hidden_size)  # Doubled for K1 and K2
         self.v_proj = nn.Linear(self.hidden_size, self.hidden_size)
         self.out_proj = nn.Linear(self.hidden_size, self.hidden_size)
 
         # Learnable parameters for λ
-        self.lambda_q1 = nn.Parameter(torch.randn(self.head_dim))
-        self.lambda_k1 = nn.Parameter(torch.randn(self.head_dim))
-        self.lambda_q2 = nn.Parameter(torch.randn(self.head_dim))
-        self.lambda_k2 = nn.Parameter(torch.randn(self.head_dim))
-        self.lambda_init = 0.8
-
-    def compute_lambda(self):
-        """Compute λ according to equation (2) in the paper."""
-        return (torch.exp(self.lambda_q1 @ self.lambda_k1) -
-                torch.exp(self.lambda_q2 @ self.lambda_k2) +
-                self.lambda_init)
-
-    def split_heads(self, x: torch.Tensor) -> torch.Tensor:
-        """Split the last dimension into (num_heads, head_dim)."""
-        new_shape = x.size()[:-1] + (self.num_attention_heads, self.head_dim)
-        x = x.view(new_shape)
-        return x.permute(0, 2, 1, 3)
+        self.lambda_param = nn.Parameter(torch.tensor(0.8))  # Initialize λ to 0.8
 
     def forward(
             self,
@@ -52,20 +30,23 @@ class DifferentialAttention(nn.Module):
         batch_size, seq_length = hidden_states.shape[:2]
 
         # Project queries and keys twice, and values once
-        q_combined = self.q_proj(hidden_states)
-        k_combined = self.k_proj(hidden_states)
-        v = self.v_proj(hidden_states)
+        q_combined = self.q_proj(hidden_states)  # [batch, seq, 2*hidden]
+        k_combined = self.k_proj(hidden_states)  # [batch, seq, 2*hidden]
+        v = self.v_proj(hidden_states)  # [batch, seq, hidden]
 
         # Split into Q1, Q2 and K1, K2
         q1, q2 = torch.chunk(q_combined, 2, dim=-1)
         k1, k2 = torch.chunk(k_combined, 2, dim=-1)
 
-        # Split heads
-        q1 = self.split_heads(q1)
-        q2 = self.split_heads(q2)
-        k1 = self.split_heads(k1)
-        k2 = self.split_heads(k2)
-        v = self.split_heads(v)
+        # Reshape for multi-head attention
+        def reshape_for_attention(x):
+            return x.view(batch_size, seq_length, self.num_attention_heads, self.head_dim).transpose(1, 2)
+
+        q1 = reshape_for_attention(q1)
+        q2 = reshape_for_attention(q2)
+        k1 = reshape_for_attention(k1)
+        k2 = reshape_for_attention(k2)
+        v = reshape_for_attention(v)
 
         # Compute attention scores
         attn_scores1 = torch.matmul(q1, k1.transpose(-2, -1)) * self.scale
@@ -78,16 +59,16 @@ class DifferentialAttention(nn.Module):
             attn_scores1 = attn_scores1 + attention_mask
             attn_scores2 = attn_scores2 + attention_mask
 
-        # Compute differential attention (equation 1)
-        lambda_val = self.compute_lambda()
-        attn_weights = (torch.softmax(attn_scores1, dim=-1) -
-                        lambda_val * torch.softmax(attn_scores2, dim=-1))
+        # Compute differential attention
+        attn_weights1 = torch.softmax(attn_scores1, dim=-1)
+        attn_weights2 = torch.softmax(attn_scores2, dim=-1)
+        attn_weights = attn_weights1 - self.lambda_param * attn_weights2
 
         # Apply attention to values
         attn_output = torch.matmul(attn_weights, v)
 
         # Reshape output
-        attn_output = attn_output.permute(0, 2, 1, 3).contiguous()
+        attn_output = attn_output.transpose(1, 2).contiguous()
         attn_output = attn_output.view(batch_size, seq_length, self.hidden_size)
         attn_output = self.out_proj(attn_output)
 
@@ -124,24 +105,39 @@ class GPT2QAModel(GPT2PreTrainedModel):
             # Create new differential attention layer with same config
             diff_attn = DifferentialAttention(self.transformer.h[i].attn.config)
 
-            # Copy weights for the projections that are the same
-            diff_attn.v_proj.weight.data = self.transformer.h[i].attn.c_attn.weight.data[:self.config.n_embd, :]
-            diff_attn.out_proj.weight.data = self.transformer.h[i].attn.c_proj.weight.data
+            # Get original weights from GPT-2 attention
+            original_weights = self.transformer.h[i].attn.c_attn.weight.data
+            original_bias = self.transformer.h[i].attn.c_attn.bias.data
+
+            # In GPT-2, the weights are concatenated [q, k, v] with shape [3*n_embd, n_embd]
+            n_embd = self.config.n_embd
+            q_weights = original_weights[:n_embd, :]
+            k_weights = original_weights[n_embd:2 * n_embd, :]
+            v_weights = original_weights[2 * n_embd:3 * n_embd, :]
 
             # Initialize the split Q and K projections
             with torch.no_grad():
-                # Split original Q and K weights for the dual attention
-                orig_q_weights = self.transformer.h[i].attn.c_attn.weight.data[
-                                 self.config.n_embd:2 * self.config.n_embd, :]
-                orig_k_weights = self.transformer.h[i].attn.c_attn.weight.data[
-                                 2 * self.config.n_embd:3 * self.config.n_embd, :]
+                # Initialize Q projections (both Q1 and Q2)
+                diff_attn.q_proj.weight.data = torch.cat([q_weights, q_weights], dim=0)
+                diff_attn.q_proj.bias.data = torch.cat([
+                    original_bias[:n_embd],
+                    original_bias[:n_embd]
+                ])
 
-                # Initialize the new dual Q and K projections
-                diff_attn.q_proj.weight.data[:self.config.n_embd, :] = orig_q_weights
-                diff_attn.q_proj.weight.data[self.config.n_embd:, :] = orig_q_weights
+                # Initialize K projections (both K1 and K2)
+                diff_attn.k_proj.weight.data = torch.cat([k_weights, k_weights], dim=0)
+                diff_attn.k_proj.bias.data = torch.cat([
+                    original_bias[n_embd:2 * n_embd],
+                    original_bias[n_embd:2 * n_embd]
+                ])
 
-                diff_attn.k_proj.weight.data[:self.config.n_embd, :] = orig_k_weights
-                diff_attn.k_proj.weight.data[self.config.n_embd:, :] = orig_k_weights
+                # Initialize V projection
+                diff_attn.v_proj.weight.data = v_weights
+                diff_attn.v_proj.bias.data = original_bias[2 * n_embd:3 * n_embd]
+
+                # Initialize output projection
+                diff_attn.out_proj.weight.data = self.transformer.h[i].attn.c_proj.weight.data
+                diff_attn.out_proj.bias.data = self.transformer.h[i].attn.c_proj.bias.data
 
             # Replace the attention layer
             self.transformer.h[i].attn = diff_attn
