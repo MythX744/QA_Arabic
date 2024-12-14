@@ -19,13 +19,19 @@ class DifferentialAttention(nn.Module):
         self.out_proj = nn.Linear(self.hidden_size, self.hidden_size)
 
         # Learnable parameters for λ
-        self.lambda_param = nn.Parameter(torch.tensor(0.8))  # Initialize λ to 0.8
+        self.lambda_param = nn.Parameter(torch.tensor(0.8))
+
+        # Save config for later use
+        self.config = config
 
     def forward(
             self,
             hidden_states: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
-            output_attentions: bool = False,
+            layer_past: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+            head_mask: Optional[torch.Tensor] = None,
+            use_cache: Optional[bool] = False,
+            output_attentions: Optional[bool] = False,
     ) -> Tuple[torch.Tensor, ...]:
         batch_size, seq_length = hidden_states.shape[:2]
 
@@ -47,6 +53,21 @@ class DifferentialAttention(nn.Module):
         k1 = reshape_for_attention(k1)
         k2 = reshape_for_attention(k2)
         v = reshape_for_attention(v)
+
+        # Handle layer past if provided
+        if layer_past is not None:
+            past_k, past_v = layer_past
+            k1 = torch.cat([past_k, k1], dim=-2)
+            k2 = torch.cat([past_k, k2], dim=-2)
+            v = torch.cat([past_v, v], dim=-2)
+
+        # Save current keys and values if using cache
+        present = (torch.stack([k1, k2]), v) if use_cache else None
+
+        # Apply head mask if provided
+        if head_mask is not None:
+            q1 = q1 * head_mask.unsqueeze(-1).unsqueeze(-1)
+            q2 = q2 * head_mask.unsqueeze(-1).unsqueeze(-1)
 
         # Compute attention scores
         attn_scores1 = torch.matmul(q1, k1.transpose(-2, -1)) * self.scale
@@ -72,7 +93,10 @@ class DifferentialAttention(nn.Module):
         attn_output = attn_output.view(batch_size, seq_length, self.hidden_size)
         attn_output = self.out_proj(attn_output)
 
+        # Prepare outputs
         outputs = (attn_output,)
+        if use_cache:
+            outputs += (present,)
         if output_attentions:
             outputs += (attn_weights,)
 
