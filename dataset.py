@@ -18,24 +18,12 @@ class ArabicQADataset(Dataset):
             self,
             data_path: str,
             tokenizer,
-            max_length: int = 32,
+            max_length: int = 512,  # Increased max_length
             is_training: bool = True,
             cache_dir: Optional[str] = None
     ):
-        """
-        Initialize the ArabicQA dataset.
-
-        Args:
-            data_path: Path to the json data file
-            tokenizer: Tokenizer for text processing
-            max_length: Maximum sequence length
-            is_training: Whether this is for training or evaluation
-            cache_dir: Directory to cache processed features
-        """
         self.data_path = Path(data_path)
         self.tokenizer = tokenizer
-
-        # Ensure tokenizer has padding token
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
@@ -43,7 +31,6 @@ class ArabicQADataset(Dataset):
         self.is_training = is_training
         self.cache_dir = Path(cache_dir) if cache_dir else None
 
-        # Load and process data
         self.examples = self.load_data()
         self.features = self.prepare_features()
 
@@ -113,48 +100,63 @@ class ArabicQADataset(Dataset):
         return features
 
     def _encode_qa_pair(self, question: str, answer: str) -> Dict:
-        """Encode question-answer pair using tokenizer."""
-        # Encode question and answer together
-        encoded = self.tokenizer(
-            question,
-            answer,
-            max_length=self.max_length,
-            padding='max_length',
-            truncation=True,
-            return_tensors='pt'
-        )
+        """Encode question-answer pair using tokenizer with proper formatting."""
+        # Create a template that the model can understand
+        prompt = f"السؤال: {question}\nالجواب:"
 
-        # Remove batch dimension
-        return {
-            'input_ids': encoded['input_ids'].squeeze(0),
-            'attention_mask': encoded['attention_mask'].squeeze(0)
-        }
-
-    def __len__(self) -> int:
-        """Return the number of examples in the dataset."""
-        return len(self.features)
-
-    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
-        """Get a single example from the dataset."""
-        feature = self.features[idx]
-
-        item = {
-            'input_ids': feature['input_ids'],
-            'attention_mask': feature['attention_mask'],
-        }
-
+        # For training, include the answer in the input
         if self.is_training:
-            # For training, encode answer as labels
-            answer_encoding = self.tokenizer(
-                feature['answer'],
+            full_text = f"{prompt} {answer}</s>"
+
+            # Encode the full text
+            encoded = self.tokenizer(
+                full_text,
                 max_length=self.max_length,
                 padding='max_length',
                 truncation=True,
                 return_tensors='pt'
             )
-            item['labels'] = answer_encoding['input_ids'].squeeze(0)
 
-        return item
+            # Create labels (shifted input_ids)
+            labels = encoded['input_ids'].clone()
+
+            # Set tokens before the answer to -100 (ignore in loss calculation)
+            prompt_tokens = self.tokenizer(prompt, return_tensors='pt')['input_ids'].shape[1]
+            labels[0, :prompt_tokens] = -100
+
+            return {
+                'input_ids': encoded['input_ids'].squeeze(0),
+                'attention_mask': encoded['attention_mask'].squeeze(0),
+                'labels': labels.squeeze(0)
+            }
+        else:
+            # For inference, only encode the prompt
+            encoded = self.tokenizer(
+                prompt,
+                max_length=self.max_length,
+                padding='max_length',
+                truncation=True,
+                return_tensors='pt'
+            )
+
+            return {
+                'input_ids': encoded['input_ids'].squeeze(0),
+                'attention_mask': encoded['attention_mask'].squeeze(0)
+            }
+
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        """Get a single example from the dataset."""
+        feature = self.features[idx]
+
+        return {
+            'input_ids': feature['input_ids'],
+            'attention_mask': feature['attention_mask'],
+            'labels': feature['labels'] if self.is_training else None
+        }
+
+    def __len__(self) -> int:
+        """Return the number of examples in the dataset."""
+        return len(self.features)
 
     def get_example_text(self, idx: int) -> Dict[str, str]:
         """Get original text of an example by index."""

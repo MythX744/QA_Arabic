@@ -5,10 +5,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 class Trainer:
-    """
-    Trainer class for fine-tuning GPT-2 on a Question Answering dataset.
-    """
-
     def __init__(
             self,
             model_name: str,
@@ -20,19 +16,6 @@ class Trainer:
             learning_rate: float = 5e-5,
             device: str = "cuda" if torch.cuda.is_available() else "cpu"
     ):
-        """
-        Initialize the Trainer class.
-
-        Args:
-            model_name (str): Pretrained GPT-2 model name.
-            train_loader (DataLoader): Training data loader.
-            val_loader (DataLoader): Validation data loader.
-            tokenizer (GPT2Tokenizer): Tokenizer for the GPT-2 model.
-            save_path (str): Path to save the trained model.
-            num_epochs (int): Number of training epochs.
-            learning_rate (float): Learning rate for optimization.
-            device (str): Device for training ("cuda" or "cpu").
-        """
         self.model = GPT2LMHeadModel.from_pretrained(model_name).to(device)
         self.tokenizer = tokenizer
         self.train_loader = train_loader
@@ -73,6 +56,10 @@ class Trainer:
                 # Backward pass
                 self.optimizer.zero_grad()
                 loss.backward()
+
+                # Add gradient clipping here
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
                 self.optimizer.step()
                 self.lr_scheduler.step()
 

@@ -1,188 +1,182 @@
-import torch
-from transformers import AutoTokenizer, GPT2LMHeadModel
-from dataset import ArabicQADataset
-from torch.utils.data import DataLoader
-from typing import List, Dict
-import json
 import logging
-from pathlib import Path
-from torchmetrics.text import BLEUScore, ROUGEScore
+
+import torch
+from torch.utils.data import DataLoader
+from torchmetrics.text import BLEUScore
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
+
+from dataset import ArabicQADataset
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class QAEvaluator:
-    def __init__(
-            self,
-            model_path: str,
-            test_data_path: str,
-            device: str = "cuda" if torch.cuda.is_available() else "cpu"
-    ):
-        """
-        Initialize the evaluator.
+def setup_dataloader(tokenizer, batch_size=8):
+    """
+    Set up validation dataloader.
+    """
+    # Make sure tokenizer has padding token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-        Args:
-            model_path: Path to the saved model
-            test_data_path: Path to test data
-            device: Device to run the model on
-        """
-        self.device = device
-        self.model_path = model_path
-        self.test_data_path = test_data_path
+    # Create dataset for validation
+    val_dataset = ArabicQADataset(
+        data_path='data/test-open.json',
+        tokenizer=tokenizer,
+        max_length=32,
+        is_training=False  # No labels for evaluation
+    )
 
-        # Load model and tokenizer
-        logger.info(f"Loading model from {model_path}")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = GPT2LMHeadModel.from_pretrained(model_path).to(device)
+    # Create dataloader for validation
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=val_dataset.collate_fn
+    )
 
-        # Set up metrics
-        self.bleu = BLEUScore()
-        self.rouge = ROUGEScore()
+    return val_loader
 
-        # Ensure tokenizer has padding token
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        # Load test dataset
-        self.test_dataset = ArabicQADataset(
-            data_path=test_data_path,
-            tokenizer=self.tokenizer,
-            max_length=32,
-            is_training=False
-        )
+def evaluate_model(model, val_loader, tokenizer, device):
+    """
+    Evaluate the model on the validation set using BLEU score from torchmetrics.
+    """
+    model.eval()
+    references = []
+    predictions = []
 
-        self.test_loader = DataLoader(
-            self.test_dataset,
-            batch_size=1,  # Process one at a time for detailed analysis
-            shuffle=False,
-            collate_fn=self.test_dataset.collate_fn
-        )
+    bleu_metric = BLEUScore()
 
-    def generate_answer(self, question: str, max_length: int = 100) -> str:
-        """
-        Generate an answer for a single question.
-        """
-        # Encode the question
-        inputs = self.tokenizer(
-            question,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=32
-        ).to(self.device)
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(val_loader):
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["labels"].to(device)
 
-        # Generate answer
-        with torch.no_grad():
-            output_sequences = self.model.generate(
-                input_ids=inputs["input_ids"],
-                attention_mask=inputs["attention_mask"],
-                max_length=max_length,
-                num_beams=4,
-                no_repeat_ngram_size=2,
-                num_return_sequences=1,
-                pad_token_id=self.tokenizer.pad_token_id,
-                eos_token_id=self.tokenizer.eos_token_id
+            # Generate answers using beam search instead of argmax
+            generated_ids = model.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                max_length=100,  # Adjust based on your needs
+                num_beams=4,  # Beam search for better generation
+                no_repeat_ngram_size=3,  # Prevent repetition
+                pad_token_id=tokenizer.pad_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+                early_stopping=True
             )
 
-        # Decode and return the generated answer
-        answer = self.tokenizer.decode(output_sequences[0], skip_special_tokens=True)
-        return answer
+            # Decode the generated and true texts
+            predicted_text = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            true_text = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-    def evaluate_model(self, output_file: str = "evaluation_results.json"):
-        """
-        Evaluate the model on the test set and save results.
-        """
-        logger.info("Starting model evaluation...")
-        results = []
-        total_bleu = 0
-        total_rouge = 0
+            # Clean up the predictions (remove the question part)
+            cleaned_predictions = [text.split("الجواب:")[-1].strip() for text in predicted_text]
 
-        self.model.eval()
+            # Flatten the predictions and references
+            predictions.extend(cleaned_predictions)
+            references.extend([t.split() for t in true_text])  # Split text into words for BLEU calculation
 
-        with torch.no_grad():
-            for idx in range(len(self.test_dataset)):
-                # Get example
-                example = self.test_dataset.get_example_text(idx)
-                question = example['question']
-                true_answer = example['answer']
+    # Calculate BLEU score
+    bleu_score = bleu_metric(predictions, references)
+    print(f"Validation BLEU Score: {bleu_score.item()}")
 
-                # Generate prediction
-                predicted_answer = self.generate_answer(question)
+    # Print some examples
+    print("\nSample Predictions:")
+    for i in range(min(3, len(predictions))):
+        print(f"\nPrediction {i + 1}:")
+        print(f"Predicted: {predictions[i]}")
+        print(f"Reference: {' '.join(references[i])}")
 
-                # Calculate metrics
-                bleu_score = self.bleu([predicted_answer], [[true_answer]]).item()
-                rouge_scores = self.rouge([predicted_answer], [true_answer])
-                rouge_score = rouge_scores['rouge1_fmeasure'].item()
-
-                total_bleu += bleu_score
-                total_rouge += rouge_score
-
-                # Store result
-                result = {
-                    'question_id': example['question_id'],
-                    'question': question,
-                    'true_answer': true_answer,
-                    'predicted_answer': predicted_answer,
-                    'bleu_score': bleu_score,
-                    'rouge_score': rouge_score
-                }
-                results.append(result)
-
-                if (idx + 1) % 10 == 0:
-                    logger.info(f"Processed {idx + 1} examples...")
-
-        # Calculate average metrics
-        avg_bleu = total_bleu / len(results)
-        avg_rouge = total_rouge / len(results)
-
-        # Add summary metrics
-        summary = {
-            'average_bleu': avg_bleu,
-            'average_rouge': avg_rouge,
-            'num_examples': len(results)
-        }
-
-        # Save results
-        output = {
-            'summary': summary,
-            'results': results
-        }
-
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(output, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"Evaluation completed. Results saved to {output_file}")
-        logger.info(f"Average BLEU score: {avg_bleu:.4f}")
-        logger.info(f"Average ROUGE score: {avg_rouge:.4f}")
-
-        return output
+    return bleu_score
 
 
 def main():
     # Configuration
-    model_path = "./models/gpt2_qa_model_epoch_3"  # Adjust to your saved model path
-    test_data_path = "data/test-open.json"
+    config = {
+        'model_name': "aubmindlab/aragpt2-base",
+        'model_path': "models/gpt2_qa_model_epoch_3",  # Path to your trained model
+        'batch_size': 8,
+        'device': "cuda" if torch.cuda.is_available() else "cpu",
+        'max_length': 512  # Increased max length for Arabic text
+    }
 
-    # Initialize evaluator
-    evaluator = QAEvaluator(model_path, test_data_path)
+    logger.info(f"Using device: {config['device']}")
 
-    # Run evaluation
-    results = evaluator.evaluate_model()
+    try:
+        # Initialize tokenizer
+        logger.info("Initializing tokenizer...")
+        tokenizer = GPT2Tokenizer.from_pretrained(config['model_name'])
 
-    # Test a few example questions
-    example_questions = [
-        "ما هو أكبر كوكب في النظام الشمسي؟",
-        "من هو مخترع الهاتف؟",
-        "متى تأسست المملكة العربية السعودية؟"
-    ]
+        # Ensure tokenizer has padding token
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
-    print("\nTesting example questions:")
-    for question in example_questions:
-        answer = evaluator.generate_answer(question)
-        print(f"\nQ: {question}")
-        print(f"A: {answer}")
+        # Load the trained model
+        logger.info("Loading trained model...")
+        model = GPT2LMHeadModel.from_pretrained(config['model_path']).to(config['device'])
+        model.eval()
+
+        # Setup validation dataloader
+        logger.info("Setting up dataloader for validation...")
+        val_dataset = ArabicQADataset(
+            data_path='data/test-open.json',
+            tokenizer=tokenizer,
+            max_length=config['max_length'],
+            is_training=True  # Set to True to get labels for BLEU score calculation
+        )
+
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=config['batch_size'],
+            shuffle=False,
+            collate_fn=val_dataset.collate_fn
+        )
+
+        # Evaluate the model
+        logger.info("Starting evaluation...")
+        bleu_score = evaluate_model(model, val_loader, tokenizer, config['device'])
+
+        # Log evaluation results
+        logger.info(f"Final BLEU Score: {bleu_score:.4f}")
+
+        # Optional: Generate some example predictions
+        logger.info("\nGenerating example predictions...")
+        num_examples = 3
+        for i in range(min(num_examples, len(val_dataset))):
+            example = val_dataset.get_example_text(i)
+            input_text = f"السؤال: {example['question']}\nالجواب:"
+
+            # Encode input
+            inputs = tokenizer(input_text, return_tensors="pt").to(config['device'])
+
+            # Generate answer
+            with torch.no_grad():
+                outputs = model.generate(
+                    input_ids=inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
+                    max_length=config['max_length'],
+                    num_beams=4,
+                    no_repeat_ngram_size=3,
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
+                    early_stopping=True
+                )
+
+            # Decode generated answer
+            generated_answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
+            generated_answer = generated_answer.split("الجواب:")[-1].strip()
+
+            # Print results
+            logger.info(f"\nExample {i + 1}:")
+            logger.info(f"Question: {example['question']}")
+            logger.info(f"Generated Answer: {generated_answer}")
+            logger.info(f"True Answer: {example['answer']}")
+
+    except Exception as e:
+        logger.error(f"An error occurred during evaluation: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":

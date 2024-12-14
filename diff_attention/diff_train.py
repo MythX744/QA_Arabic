@@ -1,6 +1,6 @@
 import torch
 from train import Trainer
-from models import create_qa_model  # Import from your models.py
+from models import create_qa_model
 from dataset import ArabicQADataset
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
