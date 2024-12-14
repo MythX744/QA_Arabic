@@ -119,7 +119,7 @@ def train_model(differential_ratio=0.3):
 
 def main():
     # Try different ratios of differential attention
-    ratios = [0.3, 0.5, 0.7]  # 30%, 50%, and 70%
+    ratios = [0.25, 0.4, 0.5]
     results = {}
 
     try:
