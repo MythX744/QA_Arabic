@@ -102,15 +102,58 @@ class GPT2QAModel(GPT2PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.transformer = GPT2Model(config)
-        self.qa_outputs = nn.Linear(config.n_embd, config.vocab_size)  # Changed to vocab_size for language modeling
+        self.qa_outputs = nn.Linear(config.n_embd, config.vocab_size)
         self.init_weights()
+
+    def replace_attention_layers(self, differential_ratio: float = 0.3):
+        """
+        Replace a portion of the attention layers with differential attention.
+
+        Args:
+            differential_ratio (float): Ratio of attention layers to replace (0 to 1)
+        """
+        # Get all attention layers
+        attention_layers = [block.attn for block in self.transformer.h]
+        num_layers = len(attention_layers)
+
+        # Calculate number of layers to replace
+        num_replace = int(num_layers * differential_ratio)
+
+        # Replace attention layers starting from the top
+        for i in range(num_layers - num_replace, num_layers):
+            # Create new differential attention layer with same config
+            diff_attn = DifferentialAttention(self.transformer.h[i].attn.config)
+
+            # Copy weights for the projections that are the same
+            diff_attn.v_proj.weight.data = self.transformer.h[i].attn.c_attn.weight.data[:self.config.n_embd, :]
+            diff_attn.out_proj.weight.data = self.transformer.h[i].attn.c_proj.weight.data
+
+            # Initialize the split Q and K projections
+            with torch.no_grad():
+                # Split original Q and K weights for the dual attention
+                orig_q_weights = self.transformer.h[i].attn.c_attn.weight.data[
+                                 self.config.n_embd:2 * self.config.n_embd, :]
+                orig_k_weights = self.transformer.h[i].attn.c_attn.weight.data[
+                                 2 * self.config.n_embd:3 * self.config.n_embd, :]
+
+                # Initialize the new dual Q and K projections
+                diff_attn.q_proj.weight.data[:self.config.n_embd, :] = orig_q_weights
+                diff_attn.q_proj.weight.data[self.config.n_embd:, :] = orig_q_weights
+
+                diff_attn.k_proj.weight.data[:self.config.n_embd, :] = orig_k_weights
+                diff_attn.k_proj.weight.data[self.config.n_embd:, :] = orig_k_weights
+
+            # Replace the attention layer
+            self.transformer.h[i].attn = diff_attn
+
+        return self
 
     def forward(
             self,
             input_ids: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
             token_type_ids: Optional[torch.Tensor] = None,
-            labels: Optional[torch.Tensor] = None,  # Added labels parameter
+            labels: Optional[torch.Tensor] = None,
             output_attentions: Optional[bool] = None,
     ) -> Tuple:
         outputs = self.transformer(
@@ -125,11 +168,8 @@ class GPT2QAModel(GPT2PreTrainedModel):
 
         loss = None
         if labels is not None:
-            # Shift logits and labels for next token prediction
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
-
-            # Calculate loss using CrossEntropyLoss
             loss_fct = nn.CrossEntropyLoss()
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
