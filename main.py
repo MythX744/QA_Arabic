@@ -1,5 +1,3 @@
-# main.py
-
 import torch
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
@@ -24,14 +22,14 @@ def setup_dataloaders(tokenizer, batch_size=8):
     train_dataset = ArabicQADataset(
         data_path='data/train-open.json',
         tokenizer=tokenizer,
-        max_length=512,
+        max_length=32,
         is_training=True
     )
 
     val_dataset = ArabicQADataset(
         data_path='data/test-open.json',
         tokenizer=tokenizer,
-        max_length=512,
+        max_length=32,
         is_training=True
     )
 
