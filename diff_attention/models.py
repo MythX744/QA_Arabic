@@ -100,34 +100,17 @@ class DifferentialAttention(nn.Module):
 
 class GPT2QAModel(GPT2PreTrainedModel):
     def __init__(self, config):
-        """
-        Initialize GPT2 model for Question Answering with differential attention.
-
-        Args:
-            config: Model configuration
-        """
         super().__init__(config)
         self.transformer = GPT2Model(config)
-        self.qa_outputs = nn.Linear(config.n_embd, 2)  # For start/end position prediction
+        self.qa_outputs = nn.Linear(config.n_embd, config.vocab_size)  # Changed to vocab_size for language modeling
         self.init_weights()
-
-    def replace_attention_layers(self, ratio=0.3):
-        """Replace portion of attention layers with differential attention."""
-        num_layers = len(self.transformer.h)
-        num_to_replace = int(num_layers * ratio)
-
-        for i in range(0, num_layers, num_layers // num_to_replace):
-            if i < num_layers:
-                self.transformer.h[i].attn = DifferentialAttention(self.config)
-                print(f"Replaced attention layer {i} with differential attention")
 
     def forward(
             self,
             input_ids: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
             token_type_ids: Optional[torch.Tensor] = None,
-            start_positions: Optional[torch.Tensor] = None,
-            end_positions: Optional[torch.Tensor] = None,
+            labels: Optional[torch.Tensor] = None,  # Added labels parameter
             output_attentions: Optional[bool] = None,
     ) -> Tuple:
         outputs = self.transformer(
@@ -140,19 +123,17 @@ class GPT2QAModel(GPT2PreTrainedModel):
         sequence_output = outputs[0]
         logits = self.qa_outputs(sequence_output)
 
-        start_logits, end_logits = logits.split(1, dim=-1)
-        start_logits = start_logits.squeeze(-1)
-        end_logits = end_logits.squeeze(-1)
+        loss = None
+        if labels is not None:
+            # Shift logits and labels for next token prediction
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
 
-        total_loss = None
-        if start_positions is not None and end_positions is not None:
+            # Calculate loss using CrossEntropyLoss
             loss_fct = nn.CrossEntropyLoss()
-            start_loss = loss_fct(start_logits, start_positions)
-            end_loss = loss_fct(end_logits, end_positions)
-            total_loss = (start_loss + end_loss) / 2
+            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
-        output = (start_logits, end_logits) + outputs[2:]
-        return ((total_loss,) + output) if total_loss is not None else output
+        return (loss, logits) if loss is not None else (logits,)
 
 
 def create_qa_model(pretrained_model_name: str, differential_ratio: float = 0.3):

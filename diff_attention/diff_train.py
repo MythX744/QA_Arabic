@@ -8,10 +8,10 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-class TrainerDiff:
+class Trainer:
     def __init__(
             self,
-            model,  # Add model parameter
+            model,
             model_name: str,
             train_loader: DataLoader,
             val_loader: DataLoader,
@@ -21,7 +21,7 @@ class TrainerDiff:
             learning_rate: float = 5e-5,
             device: str = "cuda" if torch.cuda.is_available() else "cpu"
     ):
-        self.model = model  # Store the model
+        self.model = model
         self.model_name = model_name
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -73,7 +73,7 @@ class TrainerDiff:
                     # Move batch to device
                     input_ids = batch["input_ids"].to(self.device)
                     attention_mask = batch["attention_mask"].to(self.device)
-                    labels = batch["labels"].to(self.device)
+                    labels = input_ids.clone()  # Use input_ids as labels for next token prediction
 
                     # Forward pass
                     outputs = self.model(
@@ -139,7 +139,7 @@ class TrainerDiff:
                 try:
                     input_ids = batch["input_ids"].to(self.device)
                     attention_mask = batch["attention_mask"].to(self.device)
-                    labels = batch["labels"].to(self.device)
+                    labels = input_ids.clone()  # Use input_ids as labels
 
                     outputs = self.model(
                         input_ids=input_ids,
