@@ -12,13 +12,11 @@ class DifferentialAttention(nn.Module):
         self.head_dim = self.hidden_size // self.num_attention_heads
         self.scale = self.head_dim ** -0.5
 
-        # Linear projections for Q1, Q2, K1, K2, V
-        self.q_proj = nn.Linear(self.hidden_size, 2 * self.hidden_size)  # Doubled for Q1 and Q2
-        self.k_proj = nn.Linear(self.hidden_size, 2 * self.hidden_size)  # Doubled for K1 and K2
-        self.v_proj = nn.Linear(self.hidden_size, self.hidden_size)
-        self.out_proj = nn.Linear(self.hidden_size, self.hidden_size)
+        # Single projection for Q, K, V (following GPT-2's architecture)
+        self.c_attn = nn.Linear(self.hidden_size, 3 * self.hidden_size)
+        self.c_proj = nn.Linear(self.hidden_size, self.hidden_size)
 
-        # Learnable parameters for λ
+        # Learnable parameter for λ
         self.lambda_param = nn.Parameter(torch.tensor(0.8))
 
         # Save config for later use
@@ -35,20 +33,24 @@ class DifferentialAttention(nn.Module):
     ) -> Tuple[torch.Tensor, ...]:
         batch_size, seq_length = hidden_states.shape[:2]
 
-        # Project queries and keys twice, and values once
-        q_combined = self.q_proj(hidden_states)  # [batch, seq, 2*hidden]
-        k_combined = self.k_proj(hidden_states)  # [batch, seq, 2*hidden]
-        v = self.v_proj(hidden_states)  # [batch, seq, hidden]
+        # Project input to Q, K, V using single projection (GPT-2 style)
+        qkv_combined = self.c_attn(hidden_states)  # [batch, seq, 3*hidden]
 
-        # Split into Q1, Q2 and K1, K2
-        q1, q2 = torch.chunk(q_combined, 2, dim=-1)
-        k1, k2 = torch.chunk(k_combined, 2, dim=-1)
+        # Split into Q, K, V
+        q, k, v = qkv_combined.chunk(3, dim=-1)
+
+        # Split Q and K for differential attention
+        q1, q2 = torch.chunk(q, 2, dim=-1)
+        k1, k2 = torch.chunk(k, 2, dim=-1)
 
         # Reshape for multi-head attention
         def reshape_for_attention(x):
-            return x.view(batch_size, seq_length, self.num_attention_heads, self.head_dim).transpose(1, 2)
+            new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.head_dim)
+            x = x.view(new_x_shape)
+            return x.permute(0, 2, 1, 3)
 
-        q1 = reshape_for_attention(q1)
+        # Reshape all tensors
+        q1 = reshape_for_attention(q1)  # [batch, head, seq, head_dim]
         q2 = reshape_for_attention(q2)
         k1 = reshape_for_attention(k1)
         k2 = reshape_for_attention(k2)
@@ -57,12 +59,15 @@ class DifferentialAttention(nn.Module):
         # Handle layer past if provided
         if layer_past is not None:
             past_k, past_v = layer_past
-            k1 = torch.cat([past_k, k1], dim=-2)
-            k2 = torch.cat([past_k, k2], dim=-2)
+            k1 = torch.cat([past_k[:, :, :, :self.head_dim], k1], dim=-2)
+            k2 = torch.cat([past_k[:, :, :, self.head_dim:], k2], dim=-2)
             v = torch.cat([past_v, v], dim=-2)
 
         # Save current keys and values if using cache
-        present = (torch.stack([k1, k2]), v) if use_cache else None
+        if use_cache:
+            present = (torch.cat([k1, k2], dim=-1), v)
+        else:
+            present = None
 
         # Apply head mask if provided
         if head_mask is not None:
@@ -89,9 +94,10 @@ class DifferentialAttention(nn.Module):
         attn_output = torch.matmul(attn_weights, v)
 
         # Reshape output
-        attn_output = attn_output.transpose(1, 2).contiguous()
-        attn_output = attn_output.view(batch_size, seq_length, self.hidden_size)
-        attn_output = self.out_proj(attn_output)
+        attn_output = attn_output.permute(0, 2, 1, 3).contiguous()
+        new_attn_output_shape = attn_output.size()[:-2] + (self.hidden_size,)
+        attn_output = attn_output.view(new_attn_output_shape)
+        attn_output = self.c_proj(attn_output)
 
         # Prepare outputs
         outputs = (attn_output,)
@@ -101,6 +107,22 @@ class DifferentialAttention(nn.Module):
             outputs += (attn_weights,)
 
         return outputs
+
+    def _split_heads(self, tensor, num_heads, attn_head_size):
+        """
+        Splits hidden_size dim into attn_head_size and num_heads
+        """
+        new_shape = tensor.size()[:-1] + (num_heads, attn_head_size)
+        tensor = tensor.view(new_shape)
+        return tensor.permute(0, 2, 1, 3)  # (batch, head, seq_length, head_features)
+
+    def _merge_heads(self, tensor, num_heads, attn_head_size):
+        """
+        Merges attn_head_size dim and num_attn_heads dim into hidden_size
+        """
+        tensor = tensor.permute(0, 2, 1, 3).contiguous()
+        new_shape = tensor.size()[:-2] + (num_heads * attn_head_size,)
+        return tensor.view(new_shape)
 
 
 class GPT2QAModel(GPT2PreTrainedModel):
@@ -118,8 +140,7 @@ class GPT2QAModel(GPT2PreTrainedModel):
             differential_ratio (float): Ratio of attention layers to replace (0 to 1)
         """
         # Get all attention layers
-        attention_layers = [block.attn for block in self.transformer.h]
-        num_layers = len(attention_layers)
+        num_layers = len(self.transformer.h)
 
         # Calculate number of layers to replace
         num_replace = int(num_layers * differential_ratio)
@@ -129,39 +150,15 @@ class GPT2QAModel(GPT2PreTrainedModel):
             # Create new differential attention layer with same config
             diff_attn = DifferentialAttention(self.transformer.h[i].attn.config)
 
-            # Get original weights from GPT-2 attention
-            original_weights = self.transformer.h[i].attn.c_attn.weight.data
-            original_bias = self.transformer.h[i].attn.c_attn.bias.data
-
-            # In GPT-2, the weights are concatenated [q, k, v] with shape [3*n_embd, n_embd]
-            n_embd = self.config.n_embd
-            q_weights = original_weights[:n_embd, :]
-            k_weights = original_weights[n_embd:2 * n_embd, :]
-            v_weights = original_weights[2 * n_embd:3 * n_embd, :]
-
-            # Initialize the split Q and K projections
+            # Copy weights from original attention
             with torch.no_grad():
-                # Initialize Q projections (both Q1 and Q2)
-                diff_attn.q_proj.weight.data = torch.cat([q_weights, q_weights], dim=0)
-                diff_attn.q_proj.bias.data = torch.cat([
-                    original_bias[:n_embd],
-                    original_bias[:n_embd]
-                ])
+                # Copy the combined QKV weights
+                diff_attn.c_attn.weight.data = self.transformer.h[i].attn.c_attn.weight.data.clone()
+                diff_attn.c_attn.bias.data = self.transformer.h[i].attn.c_attn.bias.data.clone()
 
-                # Initialize K projections (both K1 and K2)
-                diff_attn.k_proj.weight.data = torch.cat([k_weights, k_weights], dim=0)
-                diff_attn.k_proj.bias.data = torch.cat([
-                    original_bias[n_embd:2 * n_embd],
-                    original_bias[n_embd:2 * n_embd]
-                ])
-
-                # Initialize V projection
-                diff_attn.v_proj.weight.data = v_weights
-                diff_attn.v_proj.bias.data = original_bias[2 * n_embd:3 * n_embd]
-
-                # Initialize output projection
-                diff_attn.out_proj.weight.data = self.transformer.h[i].attn.c_proj.weight.data
-                diff_attn.out_proj.bias.data = self.transformer.h[i].attn.c_proj.bias.data
+                # Copy the output projection
+                diff_attn.c_proj.weight.data = self.transformer.h[i].attn.c_proj.weight.data.clone()
+                diff_attn.c_proj.bias.data = self.transformer.h[i].attn.c_proj.bias.data.clone()
 
             # Replace the attention layer
             self.transformer.h[i].attn = diff_attn
