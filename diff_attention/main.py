@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
 from dataset import ArabicQADataset
-from models import create_qa_model
+from .models import create_qa_model
 import logging
 from pathlib import Path
 import json
