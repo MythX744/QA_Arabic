@@ -17,21 +17,21 @@ def setup_dataloader(tokenizer, batch_size=8):
     """
     Set up validation dataloader.
     """
-    val_dataset = ArabicQADataset(
+    test_dataset = ArabicQADataset(
         data_path='data/test-open.json',
         tokenizer=tokenizer,
         max_length=128,
         is_training=False
     )
 
-    val_loader = DataLoader(
-        val_dataset,
+    test_loader = DataLoader(
+        test_dataset,
         batch_size=batch_size,
         shuffle=False,
-        collate_fn=val_dataset.collate_fn
+        collate_fn=test_dataset.collate_fn
     )
 
-    return val_loader
+    return test_loader
 
 
 def evaluate_model(model, val_loader, tokenizer, device):

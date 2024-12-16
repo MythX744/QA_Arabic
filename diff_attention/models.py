@@ -72,28 +72,16 @@ class MultiHead(nn.Module):
     def forward(self, hidden_states, layer_past=None, attention_mask=None, head_mask=None,
                 use_cache=False, output_attentions=False):
         """
-        Match GPT2's attention interface
-        Args:
-            hidden_states: input tensor (same as X in original implementation)
-            layer_past: unused, kept for compatibility
-            attention_mask: unused, kept for compatibility
-            head_mask: unused, kept for compatibility
-            use_cache: unused, kept for compatibility
-            output_attentions: unused, kept for compatibility
+        Match GPT2's attention interface.
         """
-        # Process through each attention head
         outputs = []
         for head in self.heads:
             outputs.append(head(hidden_states))
 
-        # Concatenate all heads
-        out = torch.cat(outputs, dim=-1)
+        # Concatenate outputs and project
+        attn_output = torch.cat(outputs, dim=-1)
+        attn_output = self.W_o(attn_output)
+        attn_output = self.norm(attn_output)
 
-        # Apply output projection
-        out = self.W_o(out)
-
-        # Scale by (1 - λ)
-        out = out * (1 - self.heads[0].scalar)
-
-        # Apply LayerNorm and return
-        return self.norm(out), None
+        # Ensure compatibility with GPT-2 expectations
+        return attn_output, None  # None indicates no attention scores

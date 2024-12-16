@@ -1,146 +1,257 @@
-import torch
-from transformers import AutoTokenizer, GPT2LMHeadModel
-from torch.utils.data import DataLoader
-from diff_dataset import ArabicQADataset
-from torchmetrics.text import BLEUScore
-import json
 import logging
-import os
-from tqdm import tqdm
+import torch
+from torch.utils.data import DataLoader
+from torchmetrics.text import BLEUScore
+from transformers import GPT2Tokenizer, GPT2LMHeadModel, GPT2Config
+from diff_dataset import ArabicQADataset
+from models import MultiHead
+import json
+from pathlib import Path
+from datetime import datetime
+from safetensors.torch import load_file
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 
-class Evaluator:
-    def __init__(
-            self,
-            model_path: str,
-            test_data_path: str,
-            batch_size: int = 8,
-            max_length: int = 128,
-            device: str = "cuda" if torch.cuda.is_available() else "cpu"
-    ):
-        self.device = device
-        self.max_length = max_length
+def setup_dataloader(tokenizer, batch_size=8):
+    """
+    Set up test dataloader.
+    """
+    test_dataset = ArabicQADataset(
+        data_path='../data/test-open.json',
+        tokenizer=tokenizer,
+        max_length=128,
+        is_training=False
+    )
 
-        # Load model and tokenizer
-        logger.info(f"Loading model from {model_path}")
-        self.model = GPT2LMHeadModel.from_pretrained(model_path).to(device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=test_dataset.collate_fn
+    )
 
-        # Prepare dataset and dataloader
-        self.test_dataset = ArabicQADataset(
-            data_path=test_data_path,
-            tokenizer=self.tokenizer,
-            max_length=max_length,
-            is_training=False
-        )
+    return test_loader
 
-        self.test_loader = DataLoader(
-            self.test_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            collate_fn=self.test_dataset.collate_fn
-        )
 
-        # Initialize BLEU scorer
-        self.bleu = BLEUScore()
+def load_model_with_attention(base_model_name, checkpoint_path, ratio, device):
+    """
+    Load the complete model with custom attention layers
+    """
+    try:
+        # Load state dict from safetensors
+        state_dict = load_file(checkpoint_path / 'model.safetensors', device=device)
+        logger.info(f"Loaded state dict with {len(state_dict)} keys")
 
-    def generate_answer(self, question: str) -> str:
-        """Generate an answer for a given question."""
-        input_text = f"Question: {question} Answer:"
-        inputs = self.tokenizer(
-            input_text,
-            return_tensors="pt",
-            max_length=self.max_length,
-            truncation=True
-        ).to(self.device)
+        # Initialize base model
+        model = GPT2LMHeadModel.from_pretrained(base_model_name)
 
-        with torch.no_grad():
-            outputs = self.model.generate(
-                inputs["input_ids"],
-                max_length=self.max_length,
-                num_return_sequences=1,
-                pad_token_id=self.tokenizer.pad_token_id,
-                eos_token_id=self.tokenizer.eos_token_id
-            )
+        # Load the complete state dict
+        model.load_state_dict(state_dict, strict=False)
+        model = model.to(device)
 
-        generated_answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        generated_answer = generated_answer.replace(input_text, "").strip()
+        # Replace attention layers
+        transformer_blocks = model.transformer.h
+        num_layers = len(transformer_blocks)
+        layers_to_replace = int(num_layers * ratio)
 
-        return generated_answer
+        for i in range(layers_to_replace):
+            logger.info(f"Replacing attention layer {i} with MultiHead")
+            transformer_blocks[i].attn = MultiHead(
+                dim_model=model.config.n_embd,
+                num_heads=model.config.n_head
+            ).to(device)
 
-    def evaluate(self) -> dict:
-        """Evaluate the model on the test dataset."""
-        self.model.eval()
-        generated_answers = []
-        reference_answers = []
+        logger.info(f"Successfully loaded model and replaced {layers_to_replace} attention layers")
+        return model
 
-        logger.info("Starting evaluation...")
-        for batch in tqdm(self.test_loader):
-            questions = [self.test_dataset.data[i]['question'] for i in range(len(batch['input_ids']))]
-            answers = [self.test_dataset.data[i]['answer'] for i in range(len(batch['input_ids']))]
+    except Exception as e:
+        logger.error(f"Error loading model: {str(e)}")
+        raise
 
-            for question, ref_answer in zip(questions, answers):
-                generated_answer = self.generate_answer(question)
-                generated_answers.append(generated_answer.split())
-                reference_answers.append([ref_answer.split()])
 
-        # Calculate BLEU score
-        bleu_score = self.bleu(generated_answers, reference_answers)
+def evaluate_model(model, test_loader, tokenizer, device, ratio):
+    """
+    Evaluate the model and save results to JSON.
+    """
+    model.eval()
+    all_results = []
+    predictions = []
+    references = []
+    bleu_metric = BLEUScore()
 
-        return {'bleu_score': float(bleu_score)}
+    gen_kwargs = {
+        'max_new_tokens': 64,
+        'num_beams': 4,
+        'no_repeat_ngram_size': 2,
+        'repetition_penalty': 1.2,
+        'length_penalty': 1.0,
+        'early_stopping': True,
+        'pad_token_id': tokenizer.pad_token_id,
+        'eos_token_id': tokenizer.eos_token_id,
+        'do_sample': False,
+        'use_cache': False  # Temporarily disable caching
+    }
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(test_loader):
+            try:
+                # Move batch to device
+                input_ids = batch["input_ids"].to(device)
+                attention_mask = batch["attention_mask"].to(device)
+
+                # Generate
+                try:
+                    outputs = model.generate(
+                        input_ids=input_ids,
+                        attention_mask=attention_mask,
+                        **gen_kwargs
+                    )
+
+                    # Check for None
+                    if outputs is None or not hasattr(outputs, 'sequences'):
+                        logger.error(f"Empty output in batch {batch_idx}")
+                        continue
+
+                    generated_sequences = outputs.sequences
+
+                except Exception as gen_error:
+                    logger.error(f"Generation error in batch {batch_idx}: {str(gen_error)}")
+                    continue
+
+                # Process each example
+                for i, output in enumerate(generated_sequences):
+                    example_idx = batch_idx * test_loader.batch_size + i
+                    example = test_loader.dataset.data[example_idx]
+                    question = example['question']
+                    reference = example['answer']
+
+                    # Get only the generated part (exclude input)
+                    generated_part = output[input_ids.shape[1]:]
+                    generated_text = tokenizer.decode(generated_part, skip_special_tokens=True)
+
+                    # Store results
+                    result = {
+                        "id": example_idx,
+                        "question": question,
+                        "reference_answer": reference,
+                        "generated_answer": generated_text
+                    }
+
+                    # Log examples
+                    if batch_idx < 2 or batch_idx % 100 == 0:
+                        logger.info(f"\nExample {example_idx}:")
+                        logger.info(f"Question: {question}")
+                        logger.info(f"Generated: {generated_text}")
+                        logger.info(f"Reference: {reference}")
+
+                    all_results.append(result)
+                    predictions.append(generated_text)
+                    references.append([reference])
+
+            except Exception as e:
+                logger.error(f"Error processing batch {batch_idx}: {str(e)}")
+                continue
+
+    # Calculate BLEU score
+    if predictions:
+        try:
+            bleu_score = bleu_metric(predictions, references)
+        except Exception as e:
+            logger.error(f"Error calculating BLEU score: {e}")
+            bleu_score = torch.tensor(0.0)
+    else:
+        logger.warning("No predictions generated, setting BLEU score to 0.0")
+        bleu_score = torch.tensor(0.0)
+
+    # Save results
+    final_results = {
+        "metadata": {
+            "evaluation_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "model_ratio": ratio,
+            "total_examples": len(all_results),
+            "bleu_score": float(bleu_score)
+        },
+        "results": all_results
+    }
+
+    results_dir = Path("evaluation_results")
+    results_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    json_path = results_dir / f"evaluation_ratio_{ratio}_{timestamp}.json"
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(final_results, f, ensure_ascii=False, indent=2)
+
+    logger.info(f"Evaluation results saved to {json_path}")
+    return float(bleu_score)
 
 
 def main():
-    # Configuration
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(current_dir)
-
-    configs = {
-        'test_data_path': os.path.join(parent_dir, 'data', 'test-open.json'),
-        'batch_size': 8,
-        'max_length': 128,
-        'results_dir': os.path.join(current_dir, 'evaluation_results')
+    config = {
+        'model_name': "aubmindlab/aragpt2-base",
+        'models_dir': "diff_models",
+        'batch_size': 4,
+        'device': "cuda" if torch.cuda.is_available() else "cpu",
+        'ratios': [0.25, 0.35, 0.5]
     }
 
-    # Create results directory
-    os.makedirs(configs['results_dir'], exist_ok=True)
+    logger.info(f"Using device: {config['device']}")
 
-    # Evaluate models for different ratios
-    ratios = [0.25, 0.35, 0.5]
-    results = {}
+    try:
+        # Initialize tokenizer
+        logger.info("Initializing tokenizer...")
+        tokenizer = GPT2Tokenizer.from_pretrained(config['model_name'])
+        tokenizer.padding_side = 'left'  # Set padding side to left
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
-    for ratio in ratios:
-        logger.info(f"\nEvaluating model with ratio {ratio}")
-        # Updated model path to match your project structure
-        model_path = os.path.join(current_dir, 'diff_models', f'ratio_{ratio}_ratio_{ratio}_epoch_3')
+        # Setup test dataloader
+        test_loader = setup_dataloader(tokenizer, config['batch_size'])
 
-        try:
-            evaluator = Evaluator(
-                model_path=model_path,
-                test_data_path=configs['test_data_path'],
-                batch_size=configs['batch_size'],
-                max_length=configs['max_length']
-            )
+        # Evaluate each model
+        results = {}
+        for ratio in config['ratios']:
+            logger.info(f"\nEvaluating model with ratio {ratio}")
 
-            metrics = evaluator.evaluate()
-            results[f"ratio_{ratio}"] = metrics
+            try:
+                # Load model
+                model_path = Path(config['models_dir']) / f"ratio_{ratio}_ratio_{ratio}_epoch_3"
+                model = load_model_with_attention(config['model_name'], model_path, ratio, config['device'])
+                model.eval()
 
-            logger.info(f"BLEU score for ratio {ratio}: {metrics['bleu_score']:.4f}")
+                # Evaluate
+                bleu_score = evaluate_model(model, test_loader, tokenizer, config['device'], ratio)
+                results[ratio] = bleu_score
+                logger.info(f"Ratio {ratio} - BLEU Score: {bleu_score:.4f}")
 
-        except Exception as e:
-            logger.error(f"Error evaluating model with ratio {ratio}: {str(e)}")
-            continue
+            except Exception as e:
+                logger.error(f"Error evaluating model with ratio {ratio}: {str(e)}")
+                results[ratio] = 0.0
+                continue
 
-    # Save results
-    results_path = os.path.join(configs['results_dir'], 'bleu_scores.json')
-    with open(results_path, 'w') as f:
-        json.dump(results, f, indent=4)
+        # Save comparison
+        comparison = {
+            "evaluation_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "results": results
+        }
 
-    logger.info(f"\nEvaluation completed! Results saved to {results_path}")
+        with open("evaluation_results/comparison.json", 'w') as f:
+            json.dump(comparison, f, indent=2)
+
+        logger.info("\nEvaluation complete! Summary of results:")
+        for ratio, score in results.items():
+            logger.info(f"Ratio {ratio}: BLEU = {score:.4f}")
+
+    except Exception as e:
+        logger.error(f"An error occurred during evaluation: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":
