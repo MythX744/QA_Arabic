@@ -27,8 +27,23 @@ class Trainer:
         self.device = device
         self.save_path = save_path
 
-        # Initialize optimizer and scheduler
-        self.optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
+        # First freeze all parameters
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # Unfreeze the last 2 transformer blocks
+        for i in range(2):
+            for param in self.model.transformer.h[-(i + 1)].parameters():
+                param.requires_grad = True
+
+        # Unfreeze the language modeling head (important for generation)
+        for param in self.model.lm_head.parameters():
+            param.requires_grad = True
+
+        # Initialize optimizer only with unfrozen parameters
+        trainable_params = [p for p in self.model.parameters() if p.requires_grad]
+        self.optimizer = AdamW(trainable_params, lr=self.learning_rate)
+
         self.lr_scheduler = get_scheduler(
             "linear",
             optimizer=self.optimizer,
@@ -45,6 +60,13 @@ class Trainer:
 
         # Create plots directory
         os.makedirs("plots", exist_ok=True)
+
+        # Print number of trainable parameters
+        trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        total_params = sum(p.numel() for p in self.model.parameters())
+        print(f"Trainable parameters: {trainable_params:,} ({trainable_params / total_params:.2%} of total)")
+
+    # ... rest of the code remains the same ...
 
     def train(self):
         """Train the GPT-2 model."""

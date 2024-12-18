@@ -52,6 +52,7 @@ def setup_dataloaders(tokenizer, batch_size=8):
 
 
 def main():
+    torch.cuda.empty_cache()
     # Training configurations
     config = {
         'model_name': "aubmindlab/aragpt2-base",
@@ -59,7 +60,9 @@ def main():
         'num_epochs': 3,
         'learning_rate': 5e-5,
         'save_path': "./models/gpt2_qa_model",
-        'device': "cuda" if torch.cuda.is_available() else "cpu"
+        'device': "cuda" if torch.cuda.is_available() else "cpu",
+        'unfreeze_last_n_layers': 0,  # 0 means all frozen, 1 means unfreeze last layer, etc.
+        'unfreeze_embeddings': False  # Whether to unfreeze the embedding layer
     }
 
     logger.info("Starting training process...")
