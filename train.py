@@ -66,8 +66,6 @@ class Trainer:
         total_params = sum(p.numel() for p in self.model.parameters())
         print(f"Trainable parameters: {trainable_params:,} ({trainable_params / total_params:.2%} of total)")
 
-    # ... rest of the code remains the same ...
-
     def train(self):
         """Train the GPT-2 model."""
         print("Starting training...")
