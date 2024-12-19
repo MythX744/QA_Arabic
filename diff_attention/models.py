@@ -180,8 +180,14 @@ class MultiHead(nn.Module):
         return outputs
 
 
-def replace_gpt2_attn(model, dim_model, num_heads):
-    """Replace GPT-2 attention layers with improved differential attention."""
+def replace_gpt2_attn(model, dim_model, num_heads, replacement_ratio=0.5):
+    """Replace a portion of GPT-2 attention layers with differential attention."""
+    num_layers = len(model.transformer.h)
+    num_to_replace = int(num_layers * replacement_ratio)
+
+    # Replace only the first num_to_replace layers
     for i, block in enumerate(model.transformer.h):
-        block.attn = MultiHead(dim_model, num_heads)
+        if i < num_to_replace:
+            block.attn = MultiHead(dim_model, num_heads)
+
     return model

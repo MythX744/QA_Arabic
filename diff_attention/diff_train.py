@@ -23,7 +23,6 @@ class TrainerDiff:
             device: str = "cuda" if torch.cuda.is_available() else "cpu",
             progress_tracker=None
     ):
-
         self.replacement_ratio = replacement_ratio
         self.tokenizer = tokenizer
         self.train_loader = train_loader
@@ -34,27 +33,36 @@ class TrainerDiff:
         self.save_path = save_path
         self.progress_tracker = progress_tracker
 
-        # Load the base model and move it to device immediately
-        base_model = GPT2LMHeadModel.from_pretrained(model_name).to(device)
+        # Load the base model
+        logger.info("Loading base model...")
+        base_model = GPT2LMHeadModel.from_pretrained(model_name)
 
-        # Freeze base model parameters before replacement
-        for param in base_model.parameters():
-            param.requires_grad = False
-
-        self.model = replace_gpt2_attn(base_model, dim_model=768, num_heads=12)
+        # Replace attention layers first
+        logger.info("Replacing attention layers...")
+        self.model = replace_gpt2_attn(base_model, dim_model=768, num_heads=12, replacement_ratio=self.replacement_ratio)
         self.model = self.model.to(device)
 
-        # Unfreeze only the differential attention parameters
+        # Freeze the non-attention layers
+        logger.info("Setting up parameter freezing...")
         for name, param in self.model.named_parameters():
-            if 'diff_attn' in name:  # Assuming the new attention layers have 'diff_attn' in their names
+            # Freeze all parameters except the new attention layers
+            if 'attn' not in name:  # This will catch both MultiHead and MultiheadDiffAttn parameters
+                param.requires_grad = False
+            else:
                 param.requires_grad = True
 
-        # Print parameter status for verification
+        # Verify trainable parameters
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         total_params = sum(p.numel() for p in self.model.parameters())
         logger.info(f"Trainable parameters: {trainable_params:,} ({trainable_params / total_params:.2%})")
 
-        # Initialize optimizer after moving model to device
+        # Print which layers are trainable for verification
+        logger.info("Trainable layers:")
+        for name, param in self.model.named_parameters():
+            if param.requires_grad:
+                logger.info(f"  {name}")
+
+        # Initialize optimizer with only trainable parameters
         self.optimizer = torch.optim.AdamW(
             [p for p in self.model.parameters() if p.requires_grad],
             lr=self.learning_rate
