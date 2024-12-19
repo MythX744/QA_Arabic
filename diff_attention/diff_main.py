@@ -1,129 +1,141 @@
+import os
 import torch
-from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
+from transformers import GPT2Tokenizer
 from diff_dataset import ArabicQADataset
 from diff_train import TrainerDiff
+from tqdm.auto import tqdm
 import logging
-import os
+from datetime import datetime
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('logs/training.log')
+    ]
+)
 logger = logging.getLogger(__name__)
 
-
-def setup_dataloaders(tokenizer, batch_size=8):
-    """
-    Set up training and validation dataloaders.
-    """
-    # Make sure tokenizer has padding token
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    # Create datasets
-    train_dataset = ArabicQADataset(
-        data_path='../data/train-open.json',
-        tokenizer=tokenizer,
-        max_length=128,
-        is_training=True
-    )
-
-    # Use validation set during training
-    val_dataset = ArabicQADataset(
-        data_path='../data/val-open.json',
-        tokenizer=tokenizer,
-        max_length=128,
-        is_training=False
-    )
-
-    # Create dataloaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=train_dataset.collate_fn
-    )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        collate_fn=val_dataset.collate_fn
-    )
-
-    return train_loader, val_loader
+# Set configurations
+data_path = "../data"
+model_name = "aubmindlab/aragpt2-base"
+output_dir = "saved_models_differential_attention_ration_0.5"
+batch_size = 16
+replacement_ratio = 0.5
+num_epochs = 3
+learning_rate = 5e-5
 
 
-def train_with_ratio(config, train_loader, val_loader, tokenizer, ratio):
-    """
-    Train model with specific attention layer replacement ratio
-    """
-    logger.info(f"Training model with {ratio * 100}% attention layers replaced")
+# Printing the progress bar in the terminal :)
+class ProgressTracker:
+    def __init__(self, num_epochs, num_batches):
+        self.epoch_bar = tqdm(total=num_epochs, desc="Epochs", position=0)
+        self.batch_bar = tqdm(total=num_batches, desc="Batches", position=1, leave=True)
+        self.running_loss = 0
+        self.batch_count = 0
 
-    # Create save directory for this ratio
-    ratio_save_path = os.path.join(config['save_path'], f"ratio_{ratio}")
-    os.makedirs(ratio_save_path, exist_ok=True)
+    def update_batch(self, loss):
+        self.batch_bar.update(1)
+        self.running_loss += loss
+        self.batch_count += 1
+        avg_loss = self.running_loss / self.batch_count
+        self.batch_bar.set_postfix({"loss": f"{avg_loss:.4f}"})
 
-    trainer = TrainerDiff(
-        model_name=config['model_name'],  # Use the Arabic GPT-2 model
-        train_loader=train_loader,
-        val_loader=val_loader,
-        tokenizer=tokenizer,
-        replacement_ratio=ratio,
-        save_path=ratio_save_path,
-        num_epochs=config['num_epochs'],
-        learning_rate=config['learning_rate'],
-        device=config['device']
-    )
-
-    trainer.train()
+    def update_epoch(self):
+        self.epoch_bar.update(1)
+        self.batch_bar.reset()
+        self.running_loss = 0
+        self.batch_count = 0
 
 
 def main():
-    # Training configurations
-    config = {
-        'model_name': "aubmindlab/aragpt2-base",  # Arabic GPT-2 model
-        'batch_size': 8,
-        'num_epochs': 3,
-        'learning_rate': 5e-5,
-        'save_path': "diff_models",  # Changed to match your save path
-        'device': "cuda" if torch.cuda.is_available() else "cpu"
-    }
+    # Log start time and configurations
+    start_time = datetime.now()
+    logger.info(f"Starting training at {start_time}")
+    logger.info(f"Configurations:")
+    logger.info(f"Model: {model_name}")
+    logger.info(f"Batch size: {batch_size}")
+    logger.info(f"Epochs: {num_epochs}")
+    logger.info(f"Learning rate: {learning_rate}")
+    logger.info(f"Replacement ratio: {replacement_ratio}")
 
-    logger.info("Starting training process...")
-    logger.info(f"Using device: {config['device']}")
+    # Setup device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.info(f"Using device: {device}")
+
+    # Initialize tokenizer
+    logger.info("Loading tokenizer...")
+    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+    tokenizer.pad_token = tokenizer.eos_token
+
+    # Load datasets
+    logger.info("Loading datasets...")
+    train_dataset = ArabicQADataset(
+        data_path=f"{data_path}/train-open.json",
+        tokenizer=tokenizer,
+        device=device
+    )
+    val_dataset = ArabicQADataset(
+        data_path=f"{data_path}/val-open.json",
+        tokenizer=tokenizer,
+        device=device
+    )
+
+    # Create dataloaders
+    logger.info("Creating dataloaders...")
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        collate_fn=train_dataset.collate_fn,
+        shuffle=True
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        collate_fn=val_dataset.collate_fn
+    )
+
+    # Initialize progress tracker
+    progress = ProgressTracker(num_epochs, len(train_loader))
+
+    # Initialize trainer with progress tracker
+    logger.info("Initializing trainer...")
+    trainer = TrainerDiff(
+        model_name=model_name,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        tokenizer=tokenizer,
+        replacement_ratio=replacement_ratio,
+        save_path=output_dir,
+        num_epochs=num_epochs,
+        learning_rate=learning_rate,
+        device=device,
+        progress_tracker=progress
+    )
 
     try:
-        # Create main save directory
-        os.makedirs(config['save_path'], exist_ok=True)
+        # Start training
+        logger.info("Starting training...")
+        trainer.train()
 
-        # Initialize tokenizer
-        logger.info("Initializing tokenizer...")
-        tokenizer = AutoTokenizer.from_pretrained(config['model_name'])
-
-        # Setup dataloaders
-        logger.info("Setting up dataloaders...")
-        train_loader, val_loader = setup_dataloaders(tokenizer, config['batch_size'])
-
-        # Train models with different ratios
-        ratios = [0.25, 0.35, 0.5]
-        for ratio in ratios:
-            logger.info(f"\n{'=' * 50}")
-            logger.info(f"Starting training for ratio {ratio}")
-            logger.info(f"{'=' * 50}")
-
-            try:
-                train_with_ratio(config, train_loader, val_loader, tokenizer, ratio)
-                logger.info(f"Successfully completed training for ratio {ratio}")
-            except Exception as e:
-                logger.error(f"Error during training for ratio {ratio}: {str(e)}")
-                continue
-
-        logger.info("All training configurations completed!")
+        # Log completion
+        end_time = datetime.now()
+        duration = end_time - start_time
+        logger.info(f"Training completed at {end_time}")
+        logger.info(f"Total training time: {duration}")
 
     except Exception as e:
-        logger.error(f"An error occurred during setup: {str(e)}")
+        logger.error(f"Training failed with error: {str(e)}")
         raise
+    finally:
+        # Clean up progress bars
+        progress.epoch_bar.close()
+        progress.batch_bar.close()
 
 
 if __name__ == "__main__":
+    os.makedirs("logs", exist_ok=True)
     main()

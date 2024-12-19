@@ -5,12 +5,12 @@ import json
 
 
 class ArabicQADataset(Dataset):
-    def __init__(self, data_path, tokenizer, max_length=128, is_training=True):
+    def __init__(self, data_path, tokenizer, max_length=128, is_training=True, device='cuda'):
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.is_training = is_training
+        self.device = device
 
-        # Load and process the data
         with open(data_path, 'r', encoding='utf-8') as f:
             self.data = json.load(f)
 
@@ -19,16 +19,9 @@ class ArabicQADataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.data[idx]
-
-        # Assuming each item has 'question' and 'answer' fields
-        # Adjust these fields based on your actual JSON structure
         question = item['question']
         answer = item['answer']
-
-        # Combine question and answer with a separator
         combined_text = f"Question: {question} Answer: {answer}"
-
-        # Tokenize
         encodings = self.tokenizer(
             combined_text,
             max_length=self.max_length,
@@ -36,12 +29,8 @@ class ArabicQADataset(Dataset):
             truncation=True,
             return_tensors='pt'
         )
-
-        # Remove the batch dimension added by return_tensors='pt'
         input_ids = encodings['input_ids'].squeeze(0)
         attention_mask = encodings['attention_mask'].squeeze(0)
-
-        # For training, we want the labels to be the same as input_ids
         labels = input_ids.clone()
 
         # Create the return dictionary

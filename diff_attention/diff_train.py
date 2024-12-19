@@ -4,32 +4,9 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, get_scheduler
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 import os
-from models import MultiHead
+from models import MultiHead, replace_gpt2_attn
 import logging
 logger = logging.getLogger(__name__)
-
-
-def replace_attention_layers(model, ratio, dim_model=768, num_heads=12):
-    """
-    Replace a portion of GPT2's attention layers with our MultiHead implementation
-    """
-    # Get all transformer blocks
-    transformer_blocks = model.transformer.h
-
-    # Calculate number of layers to replace
-    num_layers = len(transformer_blocks)
-    layers_to_replace = int(num_layers * ratio)
-
-    # Replace the attention layers
-    for i in range(layers_to_replace):
-        # Create new MultiHead attention with correct parameters
-        new_attention = MultiHead(
-            dim_model=model.config.n_embd,  # Pass dimension from model config
-            num_heads=model.config.n_head    # Pass number of heads from model config
-        )
-        transformer_blocks[i].attn = new_attention
-
-    return model
 
 
 class TrainerDiff:
@@ -39,22 +16,13 @@ class TrainerDiff:
             train_loader: DataLoader,
             val_loader: DataLoader,
             tokenizer: GPT2Tokenizer,
-            replacement_ratio: float = 0.3,
+            replacement_ratio: float = 0.5,
             save_path: str = "diff_models/gpt2_qa_model",
             num_epochs: int = 3,
             learning_rate: float = 5e-5,
-            device: str = "cuda" if torch.cuda.is_available() else "cpu"
+            device: str = "cuda" if torch.cuda.is_available() else "cpu",
+            progress_tracker=None
     ):
-        # Load the base model
-        base_model = GPT2LMHeadModel.from_pretrained(model_name)
-
-        # Replace attention layers with our implementation
-        self.model = replace_attention_layers(
-            base_model,
-            ratio=replacement_ratio,
-            dim_model=base_model.config.n_embd,
-            num_heads=base_model.config.n_head
-        ).to(device)
 
         self.replacement_ratio = replacement_ratio
         self.tokenizer = tokenizer
@@ -64,9 +32,34 @@ class TrainerDiff:
         self.learning_rate = learning_rate
         self.device = device
         self.save_path = save_path
+        self.progress_tracker = progress_tracker
 
-        # Initialize optimizer and scheduler
-        self.optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
+        # Load the base model and move it to device immediately
+        base_model = GPT2LMHeadModel.from_pretrained(model_name).to(device)
+
+        # Freeze base model parameters before replacement
+        for param in base_model.parameters():
+            param.requires_grad = False
+
+        self.model = replace_gpt2_attn(base_model, dim_model=768, num_heads=12)
+        self.model = self.model.to(device)
+
+        # Unfreeze only the differential attention parameters
+        for name, param in self.model.named_parameters():
+            if 'diff_attn' in name:  # Assuming the new attention layers have 'diff_attn' in their names
+                param.requires_grad = True
+
+        # Print parameter status for verification
+        trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        total_params = sum(p.numel() for p in self.model.parameters())
+        logger.info(f"Trainable parameters: {trainable_params:,} ({trainable_params / total_params:.2%})")
+
+        # Initialize optimizer after moving model to device
+        self.optimizer = torch.optim.AdamW(
+            [p for p in self.model.parameters() if p.requires_grad],
+            lr=self.learning_rate
+        )
+
         self.lr_scheduler = get_scheduler(
             "linear",
             optimizer=self.optimizer,
@@ -77,11 +70,8 @@ class TrainerDiff:
         self.loss_fn = torch.nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
         self.writer = SummaryWriter(comment=f'_ratio_{replacement_ratio}')
 
-        # Lists to store losses for plotting
         self.train_losses = []
         self.val_losses = []
-
-        # Create plots directory with ratio information
         self.plot_dir = f"plots_ratio_{replacement_ratio}"
         os.makedirs(self.plot_dir, exist_ok=True)
 
@@ -93,7 +83,7 @@ class TrainerDiff:
             # Training
             self.model.train()
             train_loss = 0
-            # In the train method of TrainerDiff
+
             for batch_idx, batch in enumerate(self.train_loader):
                 input_ids = batch["input_ids"].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
@@ -110,15 +100,16 @@ class TrainerDiff:
                 # Backward pass
                 self.optimizer.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 self.optimizer.step()
                 self.lr_scheduler.step()
 
                 train_loss += loss.item()
 
-                if batch_idx % 100 == 0:
-                    logger.info(
-                        f'Epoch: {epoch + 1}/{self.num_epochs} | Batch: {batch_idx}/{len(self.train_loader)} | Loss: {loss.item():.4f}')
+                # Simple progress print
+                print(f"\rEpoch {epoch + 1}: {batch_idx + 1}/{len(self.train_loader)}", end="")
 
+            print()  # New line after each epoch
             avg_train_loss = train_loss / len(self.train_loader)
             self.train_losses.append(avg_train_loss)
 
@@ -127,7 +118,6 @@ class TrainerDiff:
             self.val_losses.append(val_loss)
 
             # Logging
-            logger.info(f'Epoch: {epoch + 1}/{self.num_epochs}')
             logger.info(f'Average Train Loss: {avg_train_loss:.4f}')
             logger.info(f'Validation Loss: {val_loss:.4f}')
 
@@ -171,19 +161,23 @@ class TrainerDiff:
         plt.close()
 
     def save_model(self, epoch):
-        """Save the model and tokenizer with ratio information."""
-        save_dir = f"{self.save_path}_ratio_{self.replacement_ratio}_epoch_{epoch + 1}"
-        self.model.save_pretrained(save_dir)
-        self.tokenizer.save_pretrained(save_dir)
+        """Save the model and training information."""
+        # Create models directory if it doesn't exist
+        os.makedirs('saved_models_differential_attention', exist_ok=True)
 
-        # Save additional information
-        torch.save({
-            'replacement_ratio': self.replacement_ratio,
+        # Simple model name format
+        model_name = f'saved_models_differential_attention/model_{self.replacement_ratio}_epoch_{epoch + 1}'
+
+        # Save model and tokenizer
+        self.model.save_pretrained(model_name)
+        self.tokenizer.save_pretrained(model_name)
+
+        # Save training info
+        training_info = {
             'epoch': epoch,
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'scheduler_state_dict': self.lr_scheduler.state_dict(),
             'train_losses': self.train_losses,
             'val_losses': self.val_losses
-        }, os.path.join(save_dir, 'training_info.pt'))
+        }
+        torch.save(training_info, f'{model_name}/training_info.pt')
 
-        print(f"Model saved to {save_dir}")
+        logger.info(f"Model saved: {model_name}")
