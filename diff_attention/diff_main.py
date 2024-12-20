@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 # Set configurations
 data_path = "../data"
 model_name = "aubmindlab/aragpt2-base"
-output_dir = "saved_models_differential_attention_ration_0.5"
-batch_size = 16
 replacement_ratio = 0.5
+output_dir = f"saved_models_differential_attention_ration_{replacement_ratio}"
+batch_size = 16
 num_epochs = 3
 learning_rate = 5e-5
 

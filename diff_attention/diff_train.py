@@ -170,22 +170,32 @@ class TrainerDiff:
 
     def save_model(self, epoch):
         """Save the model and training information."""
-        # Create models directory if it doesn't exist
-        os.makedirs('saved_models_differential_attention', exist_ok=True)
+        # Create save directory if it doesn't exist
+        save_dir = f'saved_models_differential_attention_ratio_{self.replacement_ratio}'
+        os.makedirs(save_dir, exist_ok=True)
 
-        # Simple model name format
-        model_name = f'saved_models_differential_attention/model_{self.replacement_ratio}_epoch_{epoch + 1}'
+        # Save model weights
+        model_path = f'{save_dir}/epoch_{epoch + 1}'
+        os.makedirs(model_path, exist_ok=True)
 
-        # Save model and tokenizer
-        self.model.save_pretrained(model_name)
-        self.tokenizer.save_pretrained(model_name)
+        # Save the full model state
+        torch.save(self.model.state_dict(), os.path.join(model_path, 'model.pt'))
+
+        # Save config and tokenizer
+        self.model.config.save_pretrained(model_path)
+        self.tokenizer.save_pretrained(model_path)
 
         # Save training info
         training_info = {
             'epoch': epoch,
             'train_losses': self.train_losses,
-            'val_losses': self.val_losses
+            'val_losses': self.val_losses,
+            'replacement_ratio': self.replacement_ratio
         }
-        torch.save(training_info, f'{model_name}/training_info.pt')
+        torch.save(training_info, os.path.join(model_path, 'training_info.pt'))
 
-        logger.info(f"Model saved: {model_name}")
+        logger.info(f"Model saved: {model_path}")
+
+        # Save a completion indicator file
+        with open(os.path.join(model_path, 'training_completed.txt'), 'w') as f:
+            f.write(f"Training completed for epoch {epoch + 1}")
