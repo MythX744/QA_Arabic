@@ -1,0 +1,717 @@
+2024-12-18 21:47:11,589 - INFO - Starting training at 2024-12-18 21:47:11.588326
+2024-12-18 21:47:11,589 - INFO - Configurations:
+2024-12-18 21:47:11,589 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-18 21:47:11,589 - INFO - Batch size: 16
+2024-12-18 21:47:11,589 - INFO - Epochs: 3
+2024-12-18 21:47:11,589 - INFO - Learning rate: 5e-05
+2024-12-18 21:47:11,590 - INFO - Replacement ratio: 0.25
+2024-12-18 21:47:11,590 - INFO - Using device: cuda
+2024-12-18 21:47:11,590 - INFO - Loading tokenizer...
+2024-12-18 21:47:12,344 - INFO - Loading datasets...
+2024-12-18 21:47:12,584 - INFO - Creating dataloaders...
+2024-12-18 21:47:12,587 - INFO - Initializing trainer...
+2024-12-18 21:48:49,254 - INFO - Starting training at 2024-12-18 21:48:49.254376
+2024-12-18 21:48:49,255 - INFO - Configurations:
+2024-12-18 21:48:49,255 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-18 21:48:49,255 - INFO - Batch size: 16
+2024-12-18 21:48:49,256 - INFO - Epochs: 3
+2024-12-18 21:48:49,256 - INFO - Learning rate: 5e-05
+2024-12-18 21:48:49,256 - INFO - Replacement ratio: 0.25
+2024-12-18 21:48:49,256 - INFO - Using device: cuda
+2024-12-18 21:48:49,256 - INFO - Loading tokenizer...
+2024-12-18 21:48:49,998 - INFO - Loading datasets...
+2024-12-18 21:48:50,195 - INFO - Creating dataloaders...
+2024-12-18 21:48:50,197 - INFO - Initializing trainer...
+2024-12-18 21:48:51,400 - INFO - Starting training...
+2024-12-18 21:48:51,400 - INFO - Starting training...
+2024-12-18 21:48:52,634 - ERROR - Training failed with error: Expected all tensors to be on the same device, but found at least two devices, cpu and cuda:0! (when checking argument for argument index in method wrapper_CUDA__index_select)
+2024-12-18 21:51:40,932 - INFO - Starting training at 2024-12-18 21:51:40.931273
+2024-12-18 21:51:40,932 - INFO - Configurations:
+2024-12-18 21:51:40,932 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-18 21:51:40,932 - INFO - Batch size: 16
+2024-12-18 21:51:40,933 - INFO - Epochs: 3
+2024-12-18 21:51:40,933 - INFO - Learning rate: 5e-05
+2024-12-18 21:51:40,933 - INFO - Replacement ratio: 0.25
+2024-12-18 21:51:40,933 - INFO - Using device: cuda
+2024-12-18 21:51:40,933 - INFO - Loading tokenizer...
+2024-12-18 21:51:41,749 - INFO - Loading datasets...
+2024-12-18 21:51:42,041 - INFO - Creating dataloaders...
+2024-12-18 21:51:42,042 - INFO - Initializing trainer...
+2024-12-18 21:51:44,266 - INFO - Starting training...
+2024-12-18 21:51:44,266 - INFO - Starting training...
+2024-12-18 22:20:27,151 - INFO - Epoch: 1/3
+2024-12-18 22:20:27,151 - INFO - Average Train Loss: 1.1867
+2024-12-18 22:20:27,151 - INFO - Validation Loss: 1.0960
+2024-12-18 22:20:29,141 - INFO - Model saved: saved_models_differential_attention/model_0.25_epoch_1
+2024-12-18 22:51:03,198 - INFO - Starting training at 2024-12-18 22:51:03.198257
+2024-12-18 22:51:03,198 - INFO - Configurations:
+2024-12-18 22:51:03,198 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-18 22:51:03,198 - INFO - Batch size: 16
+2024-12-18 22:51:03,198 - INFO - Epochs: 3
+2024-12-18 22:51:03,198 - INFO - Learning rate: 5e-05
+2024-12-18 22:51:03,198 - INFO - Replacement ratio: 0.25
+2024-12-18 22:51:03,199 - INFO - Using device: cuda
+2024-12-18 22:51:03,199 - INFO - Loading tokenizer...
+2024-12-18 22:51:04,158 - INFO - Loading datasets...
+2024-12-18 22:51:04,358 - INFO - Creating dataloaders...
+2024-12-18 22:51:04,360 - INFO - Initializing trainer...
+2024-12-18 22:51:07,037 - INFO - Trainable parameters: 21,282,048 (16.64%)
+2024-12-18 22:51:07,043 - INFO - Starting training...
+2024-12-18 22:51:07,043 - INFO - Starting training...
+2024-12-18 23:14:09,914 - INFO - Average Train Loss: 1.5557
+2024-12-18 23:14:09,915 - INFO - Validation Loss: 1.3860
+2024-12-18 23:14:10,896 - INFO - Model saved: saved_models_differential_attention/model_0.25_epoch_1
+2024-12-18 23:37:11,878 - INFO - Average Train Loss: 1.4444
+2024-12-18 23:37:11,878 - INFO - Validation Loss: 1.3438
+2024-12-18 23:37:13,928 - INFO - Model saved: saved_models_differential_attention/model_0.25_epoch_2
+2024-12-19 00:00:15,308 - INFO - Average Train Loss: 1.4151
+2024-12-19 00:00:15,308 - INFO - Validation Loss: 1.3309
+2024-12-19 00:00:17,027 - INFO - Model saved: saved_models_differential_attention/model_0.25_epoch_3
+2024-12-19 00:00:17,172 - INFO - Training completed at 2024-12-19 00:00:17.172326
+2024-12-19 00:00:17,173 - INFO - Total training time: 1:09:13.974069
+2024-12-19 00:07:43,840 - INFO - Starting training at 2024-12-19 00:07:43.840455
+2024-12-19 00:07:43,840 - INFO - Configurations:
+2024-12-19 00:07:43,840 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-19 00:07:43,840 - INFO - Batch size: 16
+2024-12-19 00:07:43,841 - INFO - Epochs: 3
+2024-12-19 00:07:43,841 - INFO - Learning rate: 5e-05
+2024-12-19 00:07:43,841 - INFO - Replacement ratio: 0.5
+2024-12-19 00:07:43,841 - INFO - Using device: cuda
+2024-12-19 00:07:43,841 - INFO - Loading tokenizer...
+2024-12-19 00:07:44,503 - INFO - Loading datasets...
+2024-12-19 00:07:44,750 - INFO - Creating dataloaders...
+2024-12-19 00:07:44,752 - INFO - Initializing trainer...
+2024-12-19 00:07:47,452 - INFO - Trainable parameters: 21,282,048 (16.64%)
+2024-12-19 00:07:47,459 - INFO - Starting training...
+2024-12-19 00:07:47,459 - INFO - Starting training...
+2024-12-19 00:30:45,495 - INFO - Average Train Loss: 1.5517
+2024-12-19 00:30:45,495 - INFO - Validation Loss: 1.3596
+2024-12-19 00:30:46,364 - INFO - Model saved: saved_models_differential_attention/model_0.5_epoch_1
+2024-12-19 00:53:14,225 - INFO - Average Train Loss: 1.4292
+2024-12-19 00:53:14,226 - INFO - Validation Loss: 1.3419
+2024-12-19 00:53:14,985 - INFO - Model saved: saved_models_differential_attention/model_0.5_epoch_2
+2024-12-19 01:15:42,914 - INFO - Average Train Loss: 1.4067
+2024-12-19 01:15:42,914 - INFO - Validation Loss: 1.3259
+2024-12-19 01:15:43,738 - INFO - Model saved: saved_models_differential_attention/model_0.5_epoch_3
+2024-12-19 01:15:43,838 - INFO - Training completed at 2024-12-19 01:15:43.838915
+2024-12-19 01:15:43,838 - INFO - Total training time: 1:07:59.998460
+2024-12-19 16:13:02,772 - INFO - Starting training at 2024-12-19 16:13:02.772178
+2024-12-19 16:13:02,773 - INFO - Configurations:
+2024-12-19 16:13:02,773 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-19 16:13:02,773 - INFO - Batch size: 16
+2024-12-19 16:13:02,773 - INFO - Epochs: 3
+2024-12-19 16:13:02,773 - INFO - Learning rate: 5e-05
+2024-12-19 16:13:02,773 - INFO - Replacement ratio: 0.5
+2024-12-19 16:13:02,773 - INFO - Using device: cuda
+2024-12-19 16:13:02,773 - INFO - Loading tokenizer...
+2024-12-19 16:13:03,311 - INFO - Loading datasets...
+2024-12-19 16:13:03,554 - INFO - Creating dataloaders...
+2024-12-19 16:13:03,556 - INFO - Initializing trainer...
+2024-12-19 16:13:03,556 - INFO - Loading base model...
+2024-12-19 16:13:04,206 - INFO - Replacing attention layers...
+2024-12-19 16:13:05,330 - INFO - Setting up parameter freezing...
+2024-12-19 16:13:05,332 - INFO - Trainable parameters: 21,282,048 (16.64%)
+2024-12-19 16:13:05,332 - INFO - Trainable layers:
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.norm.weight
+2024-12-19 16:13:05,332 - INFO -   transformer.h.0.attn.norm.bias
+2024-12-19 16:13:05,332 - INFO -   transformer.h.1.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,332 - INFO -   transformer.h.1.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,332 - INFO -   transformer.h.1.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,332 - INFO -   transformer.h.1.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.norm.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.1.attn.norm.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,333 - INFO -   transformer.h.2.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,334 - INFO -   transformer.h.2.attn.norm.weight
+2024-12-19 16:13:05,334 - INFO -   transformer.h.2.attn.norm.bias
+2024-12-19 16:13:05,334 - INFO -   transformer.h.3.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,334 - INFO -   transformer.h.3.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,334 - INFO -   transformer.h.3.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,334 - INFO -   transformer.h.3.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,334 - INFO -   transformer.h.3.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,334 - INFO -   transformer.h.3.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.norm.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.3.attn.norm.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,336 - INFO -   transformer.h.4.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.4.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.4.attn.norm.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.4.attn.norm.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.norm.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.5.attn.norm.bias
+2024-12-19 16:13:05,337 - INFO -   transformer.h.6.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,337 - INFO -   transformer.h.6.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,337 - INFO -   transformer.h.6.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,337 - INFO -   transformer.h.6.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,337 - INFO -   transformer.h.6.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,337 - INFO -   transformer.h.6.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.norm.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.6.attn.norm.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,338 - INFO -   transformer.h.7.attn.norm.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.7.attn.norm.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.norm.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.8.attn.norm.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,339 - INFO -   transformer.h.9.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.norm.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.9.attn.norm.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.norm.weight
+2024-12-19 16:13:05,340 - INFO -   transformer.h.10.attn.norm.bias
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.lambda_q1
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.lambda_k1
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.lambda_q2
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.lambda_k2
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.q_proj.weight
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.q_proj.bias
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.k_proj.weight
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.k_proj.bias
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.v_proj.weight
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.v_proj.bias
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.out_proj.weight
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.out_proj.bias
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.diff_attn.subln.weight
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.norm.weight
+2024-12-19 16:13:05,341 - INFO -   transformer.h.11.attn.norm.bias
+2024-12-19 16:13:05,345 - INFO - Starting training...
+2024-12-19 16:13:05,345 - INFO - Starting training...
+2024-12-19 16:15:38,269 - INFO - Starting training at 2024-12-19 16:15:38.269426
+2024-12-19 16:15:38,270 - INFO - Configurations:
+2024-12-19 16:15:38,270 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-19 16:15:38,270 - INFO - Batch size: 16
+2024-12-19 16:15:38,270 - INFO - Epochs: 3
+2024-12-19 16:15:38,270 - INFO - Learning rate: 5e-05
+2024-12-19 16:15:38,270 - INFO - Replacement ratio: 0.5
+2024-12-19 16:15:38,270 - INFO - Using device: cuda
+2024-12-19 16:15:38,270 - INFO - Loading tokenizer...
+2024-12-19 16:15:38,824 - INFO - Loading datasets...
+2024-12-19 16:15:39,045 - INFO - Creating dataloaders...
+2024-12-19 16:15:39,047 - INFO - Initializing trainer...
+2024-12-19 16:15:39,048 - INFO - Loading base model...
+2024-12-19 16:15:40,102 - INFO - Replacing attention layers...
+2024-12-19 16:15:41,287 - INFO - Setting up parameter freezing...
+2024-12-19 16:15:41,289 - INFO - Trainable parameters: 24,815,232 (18.88%)
+2024-12-19 16:15:41,289 - INFO - Trainable layers:
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.lambda_q1
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.lambda_k1
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.lambda_q2
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.lambda_k2
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.q_proj.weight
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.q_proj.bias
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.k_proj.weight
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.k_proj.bias
+2024-12-19 16:15:41,289 - INFO -   transformer.h.0.attn.diff_attn.v_proj.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.0.attn.diff_attn.v_proj.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.0.attn.diff_attn.out_proj.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.0.attn.diff_attn.out_proj.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.0.attn.diff_attn.subln.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.0.attn.norm.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.0.attn.norm.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.lambda_q1
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.lambda_k1
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.lambda_q2
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.lambda_k2
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.q_proj.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.q_proj.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.k_proj.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.k_proj.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.v_proj.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.v_proj.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.out_proj.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.out_proj.bias
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.diff_attn.subln.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.norm.weight
+2024-12-19 16:15:41,290 - INFO -   transformer.h.1.attn.norm.bias
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.lambda_q1
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.lambda_k1
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.lambda_q2
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.lambda_k2
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.q_proj.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.q_proj.bias
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.k_proj.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.k_proj.bias
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.v_proj.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.v_proj.bias
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.out_proj.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.out_proj.bias
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.diff_attn.subln.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.norm.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.2.attn.norm.bias
+2024-12-19 16:15:41,291 - INFO -   transformer.h.3.attn.diff_attn.lambda_q1
+2024-12-19 16:15:41,291 - INFO -   transformer.h.3.attn.diff_attn.lambda_k1
+2024-12-19 16:15:41,291 - INFO -   transformer.h.3.attn.diff_attn.lambda_q2
+2024-12-19 16:15:41,291 - INFO -   transformer.h.3.attn.diff_attn.lambda_k2
+2024-12-19 16:15:41,291 - INFO -   transformer.h.3.attn.diff_attn.q_proj.weight
+2024-12-19 16:15:41,291 - INFO -   transformer.h.3.attn.diff_attn.q_proj.bias
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.k_proj.weight
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.k_proj.bias
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.v_proj.weight
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.v_proj.bias
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.out_proj.weight
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.out_proj.bias
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.diff_attn.subln.weight
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.norm.weight
+2024-12-19 16:15:41,293 - INFO -   transformer.h.3.attn.norm.bias
+2024-12-19 16:15:41,293 - INFO -   transformer.h.4.attn.diff_attn.lambda_q1
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.lambda_k1
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.lambda_q2
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.lambda_k2
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.q_proj.weight
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.q_proj.bias
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.k_proj.weight
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.k_proj.bias
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.v_proj.weight
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.v_proj.bias
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.out_proj.weight
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.out_proj.bias
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.diff_attn.subln.weight
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.norm.weight
+2024-12-19 16:15:41,294 - INFO -   transformer.h.4.attn.norm.bias
+2024-12-19 16:15:41,294 - INFO -   transformer.h.5.attn.diff_attn.lambda_q1
+2024-12-19 16:15:41,294 - INFO -   transformer.h.5.attn.diff_attn.lambda_k1
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.lambda_q2
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.lambda_k2
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.q_proj.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.q_proj.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.k_proj.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.k_proj.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.v_proj.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.v_proj.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.out_proj.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.out_proj.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.diff_attn.subln.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.norm.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.5.attn.norm.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.6.attn.c_attn.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.6.attn.c_attn.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.6.attn.c_proj.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.6.attn.c_proj.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.7.attn.c_attn.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.7.attn.c_attn.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.7.attn.c_proj.weight
+2024-12-19 16:15:41,295 - INFO -   transformer.h.7.attn.c_proj.bias
+2024-12-19 16:15:41,295 - INFO -   transformer.h.8.attn.c_attn.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.8.attn.c_attn.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.8.attn.c_proj.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.8.attn.c_proj.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.9.attn.c_attn.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.9.attn.c_attn.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.9.attn.c_proj.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.9.attn.c_proj.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.10.attn.c_attn.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.10.attn.c_attn.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.10.attn.c_proj.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.10.attn.c_proj.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.11.attn.c_attn.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.11.attn.c_attn.bias
+2024-12-19 16:15:41,296 - INFO -   transformer.h.11.attn.c_proj.weight
+2024-12-19 16:15:41,296 - INFO -   transformer.h.11.attn.c_proj.bias
+2024-12-19 16:15:41,301 - INFO - Starting training...
+2024-12-19 16:15:41,301 - INFO - Starting training...
+2024-12-19 16:37:18,591 - INFO - Average Train Loss: 1.3360
+2024-12-19 16:37:18,592 - INFO - Validation Loss: 1.0803
+2024-12-19 16:37:19,873 - INFO - Model saved: saved_models_differential_attention/model_0.5_epoch_1
+2024-12-19 16:58:47,051 - INFO - Average Train Loss: 1.1184
+2024-12-19 16:58:47,052 - INFO - Validation Loss: 1.0418
+2024-12-19 16:58:49,465 - INFO - Model saved: saved_models_differential_attention/model_0.5_epoch_2
+2024-12-19 17:21:01,443 - INFO - Average Train Loss: 1.0860
+2024-12-19 17:21:01,443 - INFO - Validation Loss: 1.0214
+2024-12-19 17:21:02,847 - INFO - Model saved: saved_models_differential_attention/model_0.5_epoch_3
+2024-12-19 17:21:02,955 - INFO - Training completed at 2024-12-19 17:21:02.955307
+2024-12-19 17:21:02,955 - INFO - Total training time: 1:05:24.685881
+2024-12-20 00:44:21,125 - INFO - Starting training at 2024-12-20 00:44:21.125938
+2024-12-20 00:44:21,126 - INFO - Configurations:
+2024-12-20 00:44:21,126 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-20 00:44:21,126 - INFO - Batch size: 16
+2024-12-20 00:44:21,126 - INFO - Epochs: 3
+2024-12-20 00:44:21,126 - INFO - Learning rate: 5e-05
+2024-12-20 00:44:21,126 - INFO - Replacement ratio: 0.5
+2024-12-20 00:44:21,126 - INFO - Using device: cuda
+2024-12-20 00:44:21,126 - INFO - Loading tokenizer...
+2024-12-20 00:44:21,687 - INFO - Loading datasets...
+2024-12-20 00:44:21,931 - INFO - Creating dataloaders...
+2024-12-20 00:44:21,934 - INFO - Initializing trainer...
+2024-12-20 00:44:21,934 - INFO - Loading base model...
+2024-12-20 00:44:22,585 - INFO - Replacing attention layers...
+2024-12-20 00:44:22,922 - INFO - Setting up parameter freezing...
+2024-12-20 00:44:22,923 - INFO - Trainable parameters: 24,815,232 (18.88%)
+2024-12-20 00:44:22,923 - INFO - Trainable layers:
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.lambda_q1
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.lambda_k1
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.lambda_q2
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.lambda_k2
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.q_proj.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.q_proj.bias
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.k_proj.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.k_proj.bias
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.v_proj.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.v_proj.bias
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.out_proj.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.out_proj.bias
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.diff_attn.subln.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.norm.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.0.attn.norm.bias
+2024-12-20 00:44:22,923 - INFO -   transformer.h.1.attn.diff_attn.lambda_q1
+2024-12-20 00:44:22,923 - INFO -   transformer.h.1.attn.diff_attn.lambda_k1
+2024-12-20 00:44:22,923 - INFO -   transformer.h.1.attn.diff_attn.lambda_q2
+2024-12-20 00:44:22,923 - INFO -   transformer.h.1.attn.diff_attn.lambda_k2
+2024-12-20 00:44:22,923 - INFO -   transformer.h.1.attn.diff_attn.q_proj.weight
+2024-12-20 00:44:22,923 - INFO -   transformer.h.1.attn.diff_attn.q_proj.bias
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.k_proj.weight
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.k_proj.bias
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.v_proj.weight
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.v_proj.bias
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.out_proj.weight
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.out_proj.bias
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.diff_attn.subln.weight
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.norm.weight
+2024-12-20 00:44:22,924 - INFO -   transformer.h.1.attn.norm.bias
+2024-12-20 00:44:22,924 - INFO -   transformer.h.2.attn.diff_attn.lambda_q1
+2024-12-20 00:44:22,924 - INFO -   transformer.h.2.attn.diff_attn.lambda_k1
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.lambda_q2
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.lambda_k2
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.q_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.q_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.k_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.k_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.v_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.v_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.out_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.out_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.diff_attn.subln.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.norm.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.2.attn.norm.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.lambda_q1
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.lambda_k1
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.lambda_q2
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.lambda_k2
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.q_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.q_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.k_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.k_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.v_proj.weight
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.v_proj.bias
+2024-12-20 00:44:22,925 - INFO -   transformer.h.3.attn.diff_attn.out_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.3.attn.diff_attn.out_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.3.attn.diff_attn.subln.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.3.attn.norm.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.3.attn.norm.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.lambda_q1
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.lambda_k1
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.lambda_q2
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.lambda_k2
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.q_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.q_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.k_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.k_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.v_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.v_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.out_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.out_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.diff_attn.subln.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.norm.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.4.attn.norm.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.lambda_q1
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.lambda_k1
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.lambda_q2
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.lambda_k2
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.q_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.q_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.k_proj.weight
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.k_proj.bias
+2024-12-20 00:44:22,926 - INFO -   transformer.h.5.attn.diff_attn.v_proj.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.5.attn.diff_attn.v_proj.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.5.attn.diff_attn.out_proj.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.5.attn.diff_attn.out_proj.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.5.attn.diff_attn.subln.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.5.attn.norm.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.5.attn.norm.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.6.attn.c_attn.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.6.attn.c_attn.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.6.attn.c_proj.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.6.attn.c_proj.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.7.attn.c_attn.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.7.attn.c_attn.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.7.attn.c_proj.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.7.attn.c_proj.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.8.attn.c_attn.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.8.attn.c_attn.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.8.attn.c_proj.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.8.attn.c_proj.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.9.attn.c_attn.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.9.attn.c_attn.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.9.attn.c_proj.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.9.attn.c_proj.bias
+2024-12-20 00:44:22,927 - INFO -   transformer.h.10.attn.c_attn.weight
+2024-12-20 00:44:22,927 - INFO -   transformer.h.10.attn.c_attn.bias
+2024-12-20 00:44:22,928 - INFO -   transformer.h.10.attn.c_proj.weight
+2024-12-20 00:44:22,928 - INFO -   transformer.h.10.attn.c_proj.bias
+2024-12-20 00:44:22,928 - INFO -   transformer.h.11.attn.c_attn.weight
+2024-12-20 00:44:22,928 - INFO -   transformer.h.11.attn.c_attn.bias
+2024-12-20 00:44:22,928 - INFO -   transformer.h.11.attn.c_proj.weight
+2024-12-20 00:44:22,928 - INFO -   transformer.h.11.attn.c_proj.bias
+2024-12-20 00:44:22,932 - INFO - Starting training...
+2024-12-20 00:44:22,932 - INFO - Starting training...
+2024-12-20 22:54:15,920 - INFO - Starting training at 2024-12-20 22:54:15.920636
+2024-12-20 22:54:15,921 - INFO - Configurations:
+2024-12-20 22:54:15,921 - INFO - Model: aubmindlab/aragpt2-base
+2024-12-20 22:54:15,921 - INFO - Batch size: 16
+2024-12-20 22:54:15,921 - INFO - Epochs: 3
+2024-12-20 22:54:15,921 - INFO - Learning rate: 5e-05
+2024-12-20 22:54:15,921 - INFO - Replacement ratio: 0.5
+2024-12-20 22:54:15,921 - INFO - Using device: cuda
+2024-12-20 22:54:15,921 - INFO - Loading tokenizer...
+2024-12-20 22:54:16,495 - INFO - Loading datasets...
+2024-12-20 22:54:16,755 - INFO - Creating dataloaders...
+2024-12-20 22:54:16,757 - INFO - Initializing trainer...
+2024-12-20 22:54:16,757 - INFO - Loading base model...
+2024-12-20 22:54:17,437 - INFO - Replacing attention layers...
+2024-12-20 22:54:18,541 - INFO - Setting up parameter freezing...
+2024-12-20 22:54:18,542 - INFO - Trainable parameters: 24,815,232 (18.88%)
+2024-12-20 22:54:18,542 - INFO - Trainable layers:
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.lambda_q1
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.lambda_k1
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.lambda_q2
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.lambda_k2
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.q_proj.weight
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.q_proj.bias
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.k_proj.weight
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.k_proj.bias
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.v_proj.weight
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.v_proj.bias
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.out_proj.weight
+2024-12-20 22:54:18,542 - INFO -   transformer.h.0.attn.diff_attn.out_proj.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.0.attn.diff_attn.subln.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.0.attn.norm.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.0.attn.norm.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.lambda_q1
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.lambda_k1
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.lambda_q2
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.lambda_k2
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.q_proj.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.q_proj.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.k_proj.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.k_proj.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.v_proj.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.v_proj.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.out_proj.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.out_proj.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.diff_attn.subln.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.norm.weight
+2024-12-20 22:54:18,543 - INFO -   transformer.h.1.attn.norm.bias
+2024-12-20 22:54:18,543 - INFO -   transformer.h.2.attn.diff_attn.lambda_q1
+2024-12-20 22:54:18,543 - INFO -   transformer.h.2.attn.diff_attn.lambda_k1
+2024-12-20 22:54:18,543 - INFO -   transformer.h.2.attn.diff_attn.lambda_q2
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.lambda_k2
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.q_proj.weight
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.q_proj.bias
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.k_proj.weight
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.k_proj.bias
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.v_proj.weight
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.v_proj.bias
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.out_proj.weight
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.out_proj.bias
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.diff_attn.subln.weight
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.norm.weight
+2024-12-20 22:54:18,544 - INFO -   transformer.h.2.attn.norm.bias
+2024-12-20 22:54:18,544 - INFO -   transformer.h.3.attn.diff_attn.lambda_q1
+2024-12-20 22:54:18,544 - INFO -   transformer.h.3.attn.diff_attn.lambda_k1
+2024-12-20 22:54:18,544 - INFO -   transformer.h.3.attn.diff_attn.lambda_q2
+2024-12-20 22:54:18,544 - INFO -   transformer.h.3.attn.diff_attn.lambda_k2
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.q_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.q_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.k_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.k_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.v_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.v_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.out_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.out_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.diff_attn.subln.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.norm.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.3.attn.norm.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.lambda_q1
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.lambda_k1
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.lambda_q2
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.lambda_k2
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.q_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.q_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.k_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.k_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.v_proj.weight
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.v_proj.bias
+2024-12-20 22:54:18,545 - INFO -   transformer.h.4.attn.diff_attn.out_proj.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.4.attn.diff_attn.out_proj.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.4.attn.diff_attn.subln.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.4.attn.norm.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.4.attn.norm.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.lambda_q1
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.lambda_k1
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.lambda_q2
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.lambda_k2
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.q_proj.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.q_proj.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.k_proj.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.k_proj.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.v_proj.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.v_proj.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.out_proj.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.out_proj.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.diff_attn.subln.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.norm.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.5.attn.norm.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.6.attn.c_attn.weight
+2024-12-20 22:54:18,546 - INFO -   transformer.h.6.attn.c_attn.bias
+2024-12-20 22:54:18,546 - INFO -   transformer.h.6.attn.c_proj.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.6.attn.c_proj.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.7.attn.c_attn.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.7.attn.c_attn.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.7.attn.c_proj.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.7.attn.c_proj.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.8.attn.c_attn.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.8.attn.c_attn.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.8.attn.c_proj.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.8.attn.c_proj.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.9.attn.c_attn.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.9.attn.c_attn.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.9.attn.c_proj.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.9.attn.c_proj.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.10.attn.c_attn.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.10.attn.c_attn.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.10.attn.c_proj.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.10.attn.c_proj.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.11.attn.c_attn.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.11.attn.c_attn.bias
+2024-12-20 22:54:18,547 - INFO -   transformer.h.11.attn.c_proj.weight
+2024-12-20 22:54:18,547 - INFO -   transformer.h.11.attn.c_proj.bias
+2024-12-20 22:54:18,552 - INFO - Starting training...
+2024-12-20 22:54:18,552 - INFO - Starting training...
+2024-12-20 23:15:53,353 - INFO - Average Train Loss: 1.2253
+2024-12-20 23:15:53,353 - INFO - Validation Loss: 1.0108
+2024-12-20 23:15:54,130 - INFO - Model saved: saved_models_differential_attention_ratio_0.5/epoch_1
+2024-12-20 23:37:22,882 - INFO - Average Train Loss: 1.0608
+2024-12-20 23:37:22,882 - INFO - Validation Loss: 0.9789
+2024-12-20 23:37:24,242 - INFO - Model saved: saved_models_differential_attention_ratio_0.5/epoch_2
+2024-12-20 23:58:52,314 - INFO - Average Train Loss: 1.0331
+2024-12-20 23:58:52,314 - INFO - Validation Loss: 0.9648
+2024-12-20 23:58:53,089 - INFO - Model saved: saved_models_differential_attention_ratio_0.5/epoch_3
+2024-12-20 23:58:53,190 - INFO - Training completed at 2024-12-20 23:58:53.190453
+2024-12-20 23:58:53,190 - INFO - Total training time: 1:04:37.269817
